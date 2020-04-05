@@ -1,27 +1,38 @@
 classdef Lexer
     
+    properties (Constant)
+        exprNumericLiteral = '^ *([0-9]+)'
+        exprSymbol = '^ *([a-zA-Z]\w*)'
+        exprComment = '^ *(%.*?)(?:\n|$)'
+        exprBlankLine = '^( *\n)'
+    end
+    
+    properties
+        tokens
+    end
+    
     methods
         function tokens = tokenize(obj, txt)
             
-            tokens = [];
+            obj.tokens = [];
             while ~isempty(txt)
             
-            extents = regexp(txt, '^ *([0-9]+)','tokenExtents','once');
+            extents = regexp(txt, Lexer.exprNumericLiteral,'tokenExtents','once');
             if ~isempty(extents)
-                [tokens, txt] = addToken(txt, extents, tokens);
+                [obj, txt] = obj.addToken(txt, extents);
             end
             
-            extents = regexp(txt, '^ *([a-zA-Z]\w*)','tokenExtents','once');
+            extents = regexp(txt, Lexer.exprSymbol,'tokenExtents','once');
             if ~isempty(extents)
-                [tokens, txt] = addToken(txt, extents, tokens);
+                [obj, txt] = obj.addToken(txt, extents);
             end
             
-            extents = regexp(txt, '^ *(%.*?)(?:\n|$)','tokenExtents','once');
+            extents = regexp(txt, Lexer.exprComment,'tokenExtents','once');
             if ~isempty(extents)
                 txt = txt(extents(2)+1:end);
             end
             
-            extents = regexp(txt, '^( *\n)','tokenExtents','once');
+            extents = regexp(txt, Lexer.exprBlankLine,'tokenExtents','once');
             if ~isempty(extents)
                 txt = txt(extents(2)+1:end);
             end
@@ -31,12 +42,14 @@ classdef Lexer
             end
             end
             
+            tokens = obj.tokens;
+            
+        end
+        function [obj, txt] = addToken(obj, txt, extents)
+            str = txt(extents(1):extents(2));
+            obj.tokens = [obj.tokens, Token(str)];
+            txt = txt(extents(2)+1:end);
         end
     end
 end
 
-function [tokens, txt] = addToken(txt, extents, tokens)
-str = txt(extents(1):extents(2));
-tokens = [tokens, Token(str)];
-txt = txt(extents(2)+1:end);
-end
