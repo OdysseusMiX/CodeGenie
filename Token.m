@@ -1,6 +1,7 @@
 classdef Token
     properties
         string
+        index
     end
     methods
         function obj = Token(str)

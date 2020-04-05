@@ -19,3 +19,21 @@ find all variable queries in a file
 Change Function Declaration
 Extract Function
 Inline Function
+
+Parser:
+find statements from tokens
+find clojures
+ - function (implicit and explicit)
+ - classdef
+ - properties
+ - methods
+ - brackets
+ - braces
+ - for
+ - if
+ - while
+determine local scope
+
+Lexer:
+float literals
+ellipses
