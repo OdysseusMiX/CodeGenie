@@ -1,0 +1,3 @@
+function simpleFunction
+
+end

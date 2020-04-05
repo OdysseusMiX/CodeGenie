@@ -1,0 +1,21 @@
+Test List
+==============
+
+find files in other path folders
+find all built-in names
+find all keywords
+
+find subfunctions
+find class properties
+find class methods
+
+find class properties/methods when class is saved to a variable
+follow variables through function calls
+
+find all variable assignments in a file
+find all variable queries in a file
+
+
+Change Function Declaration
+Extract Function
+Inline Function
