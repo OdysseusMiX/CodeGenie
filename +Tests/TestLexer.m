@@ -46,10 +46,15 @@ classdef TestLexer < matlab.unittest.TestCase
             tokens = [];
             self.assertEqual(tokens, self.lexer.tokenize(txt));
         end
+        function testTokenize_newLine(self)
+            txt = newline;
+            tokens = self.lexer.tokenize(txt);
+            self.assertEqual({newline}, {tokens.string});
+        end
         function testTokenize_commentThenValue(self)
             txt = sprintf('%% comment\nx');
             tokens = self.lexer.tokenize(txt);
-            self.assertEqual({'x'}, {tokens.string});
+            self.assertEqual({newline 'x'}, {tokens.string});
         end
         function testTokenize_OneAssignment(self)
             txt = sprintf('x = 1');
@@ -68,14 +73,15 @@ classdef TestLexer < matlab.unittest.TestCase
             self.assertEqual(strings, {tokens.string});
         end
         function testTokenize_CommentBlock(self)
-            txt = sprintf('%%{\nComment Block\n%%} \n');
+            txt = sprintf('%%{\nComment Block\n%%} ');
             self.assertEqual([], self.lexer.tokenize(txt));
         end
         
         function testTokenize_tokenHasIndex(self)
             txt = sprintf('%% comment\nx');
-            tokens = Token('x');
-            tokens.index = 11;
+            tokens = [Token(newline) Token('x')];
+            tokens(1).index = 10;
+            tokens(2).index = 11;
             self.assertEqual(tokens, self.lexer.tokenize(txt));
         end
     end

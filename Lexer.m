@@ -1,77 +1,51 @@
 classdef Lexer
     
     properties (Constant)
-        exprNumericLiteral = '^ *([0-9]+)'
-        exprSymbol = '^ *([a-zA-Z]\w*)'
-        exprComment = '^ *(%.*?)(?:\n|$)'
-        exprBlankLine = '^( *\n)'
-        exprOperator = '^ *([;,=\+\-\(\)\\\*&|~!@^{}\[\]:\<\>]+)'
-        exprString = '^ *(''.*?'')'
-        exprCommentBlock = '^(%{ *\n.*?\n%} *)(?:\n|$)'
+        exprNonTokens = {
+            '^([ \t\r\b]*)'                             % whitespace
+            '^(%{ *\n.*?\n%} *)(?:\n|$)'                % commment block
+            '^(%.*?)(?:\n|$)'                           % comment
+            }
+        exprTokens = {
+            '^(\n)'                                     % newline
+            '^([;,=\+\-\(\)\\\*&|~!@^{}\[\]:\<\>]+)'    % operator
+            '^([0-9]+)'                                 % numeric literal
+            '^(''.*?'')'                                % string literal
+            '^([a-zA-Z]\w*)'                            % identifier
+            }
     end
     
     properties
         tokens
+        index
     end
     
     methods
         function tokens = tokenize(obj, txt)
             
             obj.tokens = [];
-            index = 1;
+            obj.index = 1;
             while ~isempty(txt)
-                
-                extents = regexp(txt, Lexer.exprCommentBlock,'tokenExtents','once');
-                if ~isempty(extents)
-                    txt = txt(extents(2)+1:end);
-                    index = index+extents(2);
-                    continue;
+                matched = false;
+                for i=1:length(Lexer.exprNonTokens)
+                    extents = regexp(txt, Lexer.exprNonTokens{i},'tokenExtents','once');
+                    if ~isempty(extents)
+                        [obj, txt] = obj.skip(txt, extents);
+                        matched = true;
+                        break;
+                    end
                 end
-                
-                extents = regexp(txt, Lexer.exprComment,'tokenExtents','once');
-                if ~isempty(extents)
-                    txt = txt(extents(2)+1:end);
-                    index = index+extents(2);
-                    continue;
+                for i=1:length(Lexer.exprTokens)
+                    extents = regexp(txt, Lexer.exprTokens{i},'tokenExtents','once');
+                    if ~isempty(extents)
+                        [obj, txt] = obj.addToken(txt, extents);
+                        matched = true;
+                        break;
+                    end
                 end
-                
-                extents = regexp(txt, Lexer.exprBlankLine,'tokenExtents','once');
-                if ~isempty(extents)
-                    txt = txt(extents(2)+1:end);
-                    index = index+extents(2);
-                    continue;
-                end
-                
-                extents = regexp(txt, Lexer.exprNumericLiteral,'tokenExtents','once');
-                if ~isempty(extents)
-                    [obj, txt] = obj.addToken(txt, extents, index);
-                    index = index+extents(2);
-                    continue;
-                end
-                
-                extents = regexp(txt, Lexer.exprSymbol,'tokenExtents','once');
-                if ~isempty(extents)
-                    [obj, txt] = obj.addToken(txt, extents, index);
-                    index = index+extents(2);
-                    continue;
-                end
-                
-                extents = regexp(txt, Lexer.exprOperator,'tokenExtents','once');
-                if ~isempty(extents)
-                    [obj, txt] = obj.addToken(txt, extents, index);
-                    index = index+extents(2);
-                    continue;
-                end
-                
-                extents = regexp(txt, Lexer.exprString,'tokenExtents','once');
-                if ~isempty(extents)
-                    [obj, txt] = obj.addToken(txt, extents, index);
-                    index = index+extents(2);
-                    continue;
-                end
-                
-                
-                if isempty(extents)
+                if matched
+                    continue
+                else
                     break
                 end
             end
@@ -79,12 +53,17 @@ classdef Lexer
             tokens = obj.tokens;
             
         end
-        function [obj, txt] = addToken(obj, txt, extents, index)
+        function [obj, txt] = addToken(obj, txt, extents)
             str = txt(extents(1):extents(2));
             token = Token(str);
-            token.index = (1:length(str)) + index+extents(1)-2;
+            token.index = (1:length(str)) + obj.index+extents(1)-2;
             obj.tokens = [obj.tokens, token];
             txt = txt(extents(2)+1:end);
+            obj.index = obj.index+extents(2);
+        end
+        function [obj, txt] = skip(obj, txt, extents)
+            txt = txt(extents(2)+1:end);
+            obj.index = obj.index+extents(2);
         end
     end
 end
