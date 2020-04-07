@@ -59,5 +59,19 @@ classdef TestParser < matlab.unittest.TestCase
             self.assertEqual({statements.closureLevel}, table(:,2)');
             self.assertEqual({statements.statementNumber}, table(:,3)');
         end
+        
+        function testReadStatements(testCase)
+            testFile = '+Tests/TestSyntaxFixture/exampleScript.m';
+            
+            statements = testCase.parser.read(testFile);
+
+            testCase.assertEqual(length(statements), 12);
+            testCase.assertEqual(statements(2).string, ['1' newline]);
+            testCase.assertEqual(statements(2).file, testFile);
+            testCase.assertEqual(statements(2).index, [2 3]);
+            testCase.assertEqual(statements(3).index, [4 5]);
+            testCase.assertEqual(statements(7).index, 11:14);
+            testCase.assertEqual(statements(12).string, 'str=sprintf(''%s'',''something'')');
+        end
     end
 end

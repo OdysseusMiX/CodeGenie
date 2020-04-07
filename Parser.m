@@ -1,6 +1,17 @@
 classdef Parser
     
     methods
+        function statements = read(obj, filename)
+            txt = readfile(filename);
+            tokens = obj.parse(txt);
+            
+            nStatements = max([tokens.statementNumber]);
+            for i = 1:nStatements
+                ind = [tokens.statementNumber] == i;
+                statements(i) = Statement(tokens(ind), filename);
+            end
+        end
+        
         function result = parse(obj, txt)
             lexer = Lexer();
             tokens = lexer.tokenize(txt);

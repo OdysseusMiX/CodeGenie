@@ -34,6 +34,8 @@ find clojures
  - while
 determine local scope
 
+multiple closures in same file
+
 Lexer:
 float literals
 ellipses

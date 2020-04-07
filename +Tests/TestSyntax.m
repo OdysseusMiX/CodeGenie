@@ -22,16 +22,19 @@ classdef TestSyntax < matlab.unittest.TestCase
     methods (Test)
         function testReadStatements(testCase)
             testFile = 'exampleScript.m';
-            interpreter = Interpreter;
-            statements = interpreter.read(testFile);
-            testCase.assertEqual(length(statements), 8);
-            testCase.assertEqual(statements(1).string, '1');
-            testCase.assertEqual(statements(1).file, testFile);
-            testCase.assertEqual(statements(1).index, 2);
-            testCase.assertEqual(statements(2).index, 4);
-            testCase.assertEqual(statements(5).index, 11:13);
-            testCase.assertEqual(statements(5).line, 5);
-            testCase.assertEqual(statements(8).string, 'str = sprintf(''%s'',''something'')');
+            parser = Parser;
+            
+            tokens = parser.parse(readfile(testFile));
+            statements = pa
+
+            testCase.assertEqual(length(tokens), 28);
+%             testCase.assertEqual(statements(1).string, '1');
+%             testCase.assertEqual(statements(1).file, testFile);
+%             testCase.assertEqual(statements(1).index, 2);
+%             testCase.assertEqual(statements(2).index, 4);
+%             testCase.assertEqual(statements(5).index, 11:13);
+%             testCase.assertEqual(statements(5).line, 5);
+%             testCase.assertEqual(statements(8).string, 'str = sprintf(''%s'',''something'')');
         end
     end
 end
