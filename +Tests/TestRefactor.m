@@ -9,7 +9,7 @@ classdef TestRefactor < matlab.unittest.TestCase
         function setup(testCase)
             testCase.oldpath = addpath(cd);
             testCase.startDir = cd;
-            cd('+Tests/TestRefactorFixture')
+            cd('Example1')
         end
     end
     methods (TestMethodTeardown)
@@ -22,11 +22,11 @@ classdef TestRefactor < matlab.unittest.TestCase
     methods (Test)
         function testExtractFunction_explicitFunction_noParameters(testCase)
             testFile = 'testFile.m';
-            copyfile('printOwing_initial.m',testFile);
+            copyfile('printOwing_step1_before.m',testFile);
                         
             Refactor.extractFunction(testFile);
             
-            txtExpected = Parser.readFile('printOwing_step1.m');            
+            txtExpected = Parser.readFile('printOwing_step1_after.m');            
             txtActual = Parser.readFile(testFile);
             
             testCase.assertEqual(txtActual, txtExpected);
@@ -34,19 +34,19 @@ classdef TestRefactor < matlab.unittest.TestCase
             delete(testFile);
         end
         
-%         function testExtractFunction_toNestedFunction(testCase)
-%             testFile = 'testFile.m';
-%             copyfile('printOwing_step2_before.m',testFile);
-%             
-%             Refactor.extractFunction(testFile);
-%             
-%             txtExpected = Parser.readFile('printOwing_step2_after.m');            
-%             txtActual = Parser.readFile(testFile);
-%             
-%             testCase.assertEqual(txtActual, txtExpected);
-%             
-%             delete(testFile);
-%         end
+        function testExtractFunction_toNestedFunction(testCase)
+            testFile = 'testFile.m';
+            copyfile('printOwing_step2_before.m',testFile);
+            
+            Refactor.extractFunction(testFile);
+            
+            txtExpected = Parser.readFile('printOwing_step2_after.m');            
+            txtActual = Parser.readFile(testFile);
+            
+            testCase.assertEqual(txtActual, txtExpected);
+            
+            delete(testFile);
+        end
     end
     
 end

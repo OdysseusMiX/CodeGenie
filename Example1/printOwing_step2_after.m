@@ -16,14 +16,14 @@ invoice.dueDate = Date(today.getFullYear(), today.getMonth(), today.getDate() + 
 printDetails;
 
 function printDetails
-console.log('name: %s', invoice.customer);
-console.log('amount: %s', outstanding);
-console.log('due: %s', invoice.dueDate.toLocaleDateString());
+fprintf('name: %s\n', invoice.customer);
+fprintf('amount: %2.2f\n', outstanding);
+fprintf('due: %s\n', invoice.dueDate.toLocaleDateString());
 end
 end
 
 function printBanner
-console.log('***********************');
-console.log('**** Customer Owes ****');
-console.log('***********************');
+fprintf('***********************\n');
+fprintf('**** Customer Owes ****\n');
+fprintf('***********************\n');
 end
