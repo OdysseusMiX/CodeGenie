@@ -1,8 +1,8 @@
 function runAll
 
 test = {
-    Tests.TestSyntax
     Tests.TestLexer
+    Tests.TestParser
     Tests.TestInspector
     Tests.TestRefactor
     };

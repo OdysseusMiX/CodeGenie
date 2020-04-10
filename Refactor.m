@@ -4,52 +4,26 @@ classdef Refactor
         
         function extractFunction(filename)
             
-            fid = fopen(filename);
-            lines = textscan(fid, '%s','Delimiter','\n','WhiteSpace','');
-            fclose(fid);
-            lines = lines{1};
+            tokens = Parser.parseFile(filename);
+            indStart = find(strncmp('%<extract>', {tokens.string}, 10));
+            indStop = find(strcmp('%<\extract>', {tokens.string}));
             
-            foundStart = false;
-            foundStop = false;
-            nest = false;
-            endStr = '%<\extract>';
-            for i = 1:length(lines)
-                line = lines{i};
-                
-                if strncmp(line, '%<extract>', 10)
-                    start = i;
-                    foundStart = true;
-                    functionStr = line(11:end);
-                elseif strncmp(line, '%<nest>', 7)
-                    start = i;
-                    foundStart = true;
-                    functionStr = line(8:end);
-                    nest = true;
-                    endStr = '%</nest>';
-                elseif foundStart && strncmp(line, endStr, length(endStr))
-                    stop = i;
-                    foundStop = true;
-                    break;
-                end
-            end
-            if ~foundStop
-                return;
-            end
+            index = indStart(1):indStop(1);
             
-            lines = [lines; {''}];
+            functionCall = tokens(indStart(1)).string(11:end);
             
-            lines = [lines; { ['function ' functionStr] }];
-            lines = [lines; lines((start+1):(stop-1)) ];
-            lines = [lines; {'end'}];
-            
-            lines(start) = {[functionStr ';']};
-            lines(start+1:stop) = [];
+            nTokens = length(tokens);
+            txt_before = [tokens(1:(index(1)-1)).string];
+            txt_replacement = [functionCall ';'];
+            txt_after = [tokens((index(end)+1):nTokens).string];
+            txt_extracted = ['function ' functionCall tokens(index(2:end-1)).string 'end' newline];
+            txtOut = [txt_before, txt_replacement, txt_after, newline, txt_extracted ];
             
             fid = fopen(filename,'w');
-            fprintf(fid,'%s\n', lines{:});
+            fprintf(fid,'%s', txtOut);
             fclose(fid);
+            
         end
-        
     end
     
 end
