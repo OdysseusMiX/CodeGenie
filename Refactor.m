@@ -5,104 +5,74 @@ classdef Refactor
         function extractFunction(filename)
             
             tokens = Parser.parseFile(filename);
+            
             indStart = find(strncmp('%<extract>', {tokens.string}, 10));
             indStop = find(strcmp('%<\extract>', {tokens.string}));
-            
-            if isempty(indStart)
-                indStart = find(strncmp('%<nest>', {tokens.string}, 7));
-                indStop = find(strcmp('%<\nest>', {tokens.string}));
-                
-                if isempty(indStart)
-                    return;
-                else
-                    index = indStart(1):indStop(1);
-                    extractToNestedFunction(tokens, index, filename);
-                end
-            else
+            if ~isempty(indStart)
                 index = indStart(1):indStop(1);
                 extractToEndOfFile(tokens, index, filename);
+                return;
             end
             
+            indStart = find(strncmp('%<nest>', {tokens.string}, 7));
+            indStop = find(strcmp('%<\nest>', {tokens.string}));
+            if ~isempty(indStart)
+                index = indStart(1):indStop(1);
+                extractToNestedFunction(tokens, index, filename);
+            end
         end
     end
-    
 end
 
 function extractToEndOfFile(tokens, index, filename)
+
 functionCall = tokens(index(1)).string(11:end);
-nTokens = length(tokens);
 
-determineAssignmentTokens;
+referencedNames = Parser.findAllReferencedNames(tokens(index));
 
-%<nest>determineComplexNames
-indName = strcmp({tokens(index).type},'word');
-i = length(index);
-while i>1
-   if indName(i)
-      if i>1 && strcmp(tokens(index(i-1)).string,'.')
-          indName(i) = false;
-      end
-   end
-   i = i-1;
-end
-%<\nest>
+functionCall = decorateFunctionCall(functionCall, referencedNames);
 
-% Find all referenced names
-knownNames = {'fprintf'};
-referencedNames = {};
-for i=1:length(index)
-    if ~indLHS(i) && indName(i)
-        name = tokens(index(i)).string;
-        if ~any(strcmp(referencedNames, name)) && ~any(strcmp(knownNames, name))
-            referencedNames = [referencedNames; {name}];
-        end
-    end
-end
-
-% append referenced names to function call
-if length(referencedNames)>1
-functionCall = [functionCall '(' referencedNames{1} sprintf(', %s',referencedNames{2:end}) ')'];
-elseif length(referencedNames)==1
-functionCall = [functionCall '(' referencedNames{1} ')'];
-end
-
-txt_before = [tokens(1:(index(1)-1)).string];
-txt_replacement = [functionCall ';'];
-txt_after = [tokens((index(end)+1):nTokens).string];
-txt_extracted = ['function ' functionCall tokens(index(2:end-1)).string 'end' newline];
-txt = [txt_before, txt_replacement, txt_after, newline, txt_extracted ];
+txt = getRefactoredText(tokens, index, functionCall);
 
 overwriteFile(filename, txt);
 
-function determineAssignmentTokens
-indLHS = false(size(index));
-isLHS = false;
-for i=length(index):-1:1
-    indLHS(i) = isLHS;
-    if strcmp(tokens(index(i)).string,'=')
-        isLHS = ~isLHS;
-    elseif isLHS && any(strcmp(tokens(index(i)).string, {newline, ';'}))
-        isLHS = false;
+    function functionCall = decorateFunctionCall(functionCall, referencedNames)
+        if length(referencedNames)>1
+            functionCall = [functionCall '(' referencedNames{1} sprintf(', %s',referencedNames{2:end}) ')'];
+        elseif length(referencedNames)==1
+            functionCall = [functionCall '(' referencedNames{1} ')'];
+        end
     end
-end
-end
+
+    function txt = getRefactoredText(tokens, index, functionCall)
+        nTokens = length(tokens);
+        txt_before = [tokens(1:(index(1)-1)).string];
+        txt_replacement = [functionCall ';'];
+        txt_after = [tokens((index(end)+1):nTokens).string];
+        txt_extracted = ['function ' functionCall tokens(index(2:end-1)).string 'end' newline];
+        txt = [txt_before, txt_replacement, txt_after, newline, txt_extracted ];
+    end
 end
 
 function extractToNestedFunction(tokens, index, filename)
+
 functionCall = tokens(index(1)).string(8:end);
-nTokens = length(tokens);
-
+        
 indInsert = findEndOfCurrentFunctionOrScript(tokens, index(1));
-    
-txt_before_extraction = [tokens(1:(index(1)-1)).string];
-txt_replacement = [functionCall ';'];
-txt_extracted = ['function ' functionCall tokens(index(2:end-1)).string 'end' newline];
-txt_before_end = [tokens((index(end)+1):(indInsert-1)).string];
-txt_after = [tokens(indInsert:nTokens).string];
 
-txt = [txt_before_extraction, txt_replacement, txt_before_end, newline, txt_extracted, txt_after ];
+txt = getRefactoredText(tokens, index, indInsert, functionCall);
 
 overwriteFile(filename, txt);
+
+    function txt = getRefactoredText(tokens, index, indInsert, functionCall)
+        nTokens = length(tokens);
+        txt_before_extraction = [tokens(1:(index(1)-1)).string];
+        txt_replacement = [functionCall ';'];
+        txt_before_end = [tokens((index(end)+1):(indInsert-1)).string];
+        txt_extracted = ['function ' functionCall tokens(index(2:end-1)).string 'end' newline];
+        txt_after = [tokens(indInsert:nTokens).string];
+        txt = [txt_before_extraction, txt_replacement, txt_before_end, newline, txt_extracted, txt_after ];
+    end
 end
 
 function indInsert = findEndOfCurrentFunctionOrScript(tokens, startIndex)
@@ -123,11 +93,18 @@ indInsert = findBottomOfLevel(tokens, funcLevel, startIndex);
     end
     function indInsert = findBottomOfLevel(tokens, funcLevel, startIndex)
         i = startIndex;
+        parenCount = 0;
         while i<length(tokens)
             i = i+1;
-            if tokens(i).closureLevel == funcLevel && strcmp(tokens(i).string, 'end')
-                indInsert = i;
-                break
+            if tokens(i).closureLevel == funcLevel
+                if parenCount==0 && strcmp(tokens(i).string, 'end')
+                    indInsert = i;
+                    break
+                elseif any(strcmp(tokens(i).string, {'(','[','{'}))
+                    parenCount = parenCount+1;
+                elseif any(strcmp(tokens(i).string, {')',']','}'}))
+                    parenCount = parenCount-1;
+                end
             end
         end
     end

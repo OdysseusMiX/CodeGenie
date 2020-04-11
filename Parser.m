@@ -33,7 +33,7 @@ classdef Parser
             i = 0;
             while i<length(tokens)
                 i = i+1;
-                appendToken(tokens(i));
+                result(i) = ParsedToken(tokens(i), closureLevel, statementCount(closureLevel));
                 switch tokens(i).type
                     case 'whitespace'
                     case 'blockComment'
@@ -67,11 +67,52 @@ classdef Parser
                 end
                 
             end
+        end
+        
+        function referencedNames = findAllReferencedNames(tokens)
+            indLHS = Parser.determineAssignmentTokens(tokens);
+            indName = Parser.determineComplexNames(tokens);
             
-            function appendToken(token)
-                result(i) = ParsedToken(token, closureLevel, statementCount(closureLevel));
+            knownNames = {'fprintf'};
+            referencedNames = {};
+            for i=1:length(tokens)
+                if ~indLHS(i) && indName(i)
+                    name = tokens(i).string;
+                    if ~iskeyword(name) && ...
+                            ~any(strcmp(referencedNames, name)) && ...
+                            ~any(strcmp(knownNames, name))
+                        referencedNames = [referencedNames; {name}];
+                    end
+                end
             end
         end
+        
+        function indLHS = determineAssignmentTokens(tokens)
+            indLHS = false(size(tokens));
+            isLHS = false;
+            for i=length(tokens):-1:1
+                indLHS(i) = isLHS;
+                if strcmp(tokens(i).string,'=')
+                    isLHS = ~isLHS;
+                elseif isLHS && any(strcmp(tokens(i).string, {newline, ';'}))
+                    isLHS = false;
+                end
+            end
+        end
+        
+        function indName = determineComplexNames(tokens)
+            indName = strcmp({tokens.type},'word');
+            i = length(tokens);
+            while i>1
+                if indName(i)
+                    if i>1 && strcmp(tokens(i-1).string,'.')
+                        indName(i) = false;
+                    end
+                end
+                i = i-1;
+            end
+        end
+        
     end
 end
 
