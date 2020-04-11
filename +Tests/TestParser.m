@@ -46,10 +46,24 @@ classdef TestParser < matlab.unittest.TestCase
             self.assertEqual([tokens.closureLevel], [1 1 1 1 1 1 1]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1 1]);
         end
-        function testParse_endInsideArrayIndexIsNotClosureEnd(self)
+        function testParse_endInsideParenIsNotClosureEnd(self)
             txt = sprintf('s(1:end)');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'s' '(' '1' ':' 'end' ')'});
+            self.assertEqual([tokens.closureLevel], [1 1 1 1 1 1]);
+            self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1]);
+        end
+        function testParse_endInsideBracketsIsNotClosureEnd(self)
+            txt = sprintf('s[1:end]');
+            tokens = Parser.parse(txt);
+            self.assertEqual({tokens.string}, {'s' '[' '1' ':' 'end' ']'});
+            self.assertEqual([tokens.closureLevel], [1 1 1 1 1 1]);
+            self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1]);
+        end
+        function testParse_endInsideBracesIsNotClosureEnd(self)
+            txt = sprintf('s{1:end}');
+            tokens = Parser.parse(txt);
+            self.assertEqual({tokens.string}, {'s' '{' '1' ':' 'end' '}'});
             self.assertEqual([tokens.closureLevel], [1 1 1 1 1 1]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1]);
         end

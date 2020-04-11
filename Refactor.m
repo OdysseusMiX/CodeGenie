@@ -34,7 +34,7 @@ nTokens = length(tokens);
 
 determineAssignmentTokens;
 
-%determineComplexNames
+%<nest>determineComplexNames
 indName = strcmp({tokens(index).type},'word');
 i = length(index);
 while i>1
@@ -45,6 +45,7 @@ while i>1
    end
    i = i-1;
 end
+%<\nest>
 
 % Find all referenced names
 knownNames = {'fprintf'};

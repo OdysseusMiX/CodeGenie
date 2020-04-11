@@ -57,9 +57,9 @@ classdef Parser
                         switch tokens(i).string
                             case ';'
                                 statementCount(closureLevel) = statementCount(closureLevel)+1;
-                            case '('
+                            case {'(' '[' '{'}
                                 parenCount = parenCount+1;
-                            case ')'
+                            case {')' ']' '}'}
                                 parenCount = parenCount-1;
                             otherwise
                         end
