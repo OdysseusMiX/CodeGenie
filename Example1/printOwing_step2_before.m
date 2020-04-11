@@ -17,7 +17,7 @@ invoice.dueDate = Date(today.getFullYear(), today.getMonth(), today.getDate() + 
 fprintf('name: %s\n', invoice.customer);
 fprintf('amount: %2.2f\n', outstanding);
 fprintf('due: %s\n', invoice.dueDate.toLocaleDateString());
-%<\nest>
+%</nest>
 end
 
 function printBanner

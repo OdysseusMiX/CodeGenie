@@ -5,7 +5,7 @@ outstanding = 0;
 fprintf('***********************\n');
 fprintf('**** Customer Owes ****\n');
 fprintf('***********************\n');
-%<\extract>
+%</extract>
 
 % calculate outstanding
 for i=1:length(invoice.orders)

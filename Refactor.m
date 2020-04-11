@@ -7,7 +7,7 @@ classdef Refactor
             tokens = Parser.parseFile(filename);
             
             indStart = find(strncmp('%<extract>', {tokens.string}, 10));
-            indStop = find(strcmp('%<\extract>', {tokens.string}));
+            indStop = find(strcmp('%</extract>', {tokens.string}));
             if ~isempty(indStart)
                 index = indStart(1):indStop(1);
                 extractToEndOfFile(tokens, index, filename);
@@ -15,7 +15,7 @@ classdef Refactor
             end
             
             indStart = find(strncmp('%<nest>', {tokens.string}, 7));
-            indStop = find(strcmp('%<\nest>', {tokens.string}));
+            indStop = find(strcmp('%</nest>', {tokens.string}));
             if ~isempty(indStart)
                 index = indStart(1):indStop(1);
                 extractToNestedFunction(tokens, index, filename);
