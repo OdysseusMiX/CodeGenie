@@ -9,6 +9,10 @@ classdef ParsedToken
     end
     methods
         function obj = ParsedToken(token, closureLevel, statementNumber)
+            if nargin<1
+                return;
+            end
+            
             obj.string = token.string;
             obj.index = token.index;
             obj.type = token.type;

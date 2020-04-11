@@ -47,7 +47,21 @@ classdef TestRefactor < matlab.unittest.TestCase
             
             delete(testFile);
         end
-    end
+        
+        function testExtractFunction_withReferencedParameters(testCase)
+            testFile = 'testFile.m';
+            copyfile('printOwing_step3_before.m',testFile);
+            
+            Refactor.extractFunction(testFile);
+            
+            txtExpected = Parser.readFile('printOwing_step3_after.m');            
+            txtActual = Parser.readFile(testFile);
+            
+            testCase.assertEqual(txtActual, txtExpected);
+            
+            delete(testFile);
+        end
+end
     
 end
 

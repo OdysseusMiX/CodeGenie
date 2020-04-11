@@ -86,10 +86,27 @@ classdef TestLexer < matlab.unittest.TestCase
             self.assertEqual(length(tokens), 1);
             self.assertEqual(tokens.type, 'blockComment');
         end
-        function testTokenize_Operators(self)
+        function testTokenize_Dot(self)
             tokens = self.lexer.tokenize('.');
             self.assertEqual('.', tokens.string);
             self.assertEqual(tokens.type, 'operator');
+        end
+        function testTokenize_eq(self)
+            tokens = self.lexer.tokenize('==');
+            self.assertEqual(length(tokens), 1);
+            self.assertEqual(tokens.string, '==');
+            self.assertEqual(tokens.type, 'operator');
+        end
+        function testTokenize_elementWiseMath(self)
+            tokens = self.lexer.tokenize('./.^.*');
+            self.assertEqual(length(tokens), 3);
+            self.assertEqual({tokens.string}, {'./' '.^' '.*'});
+            self.assertEqual({tokens.type}, {'operator' 'operator' 'operator'});
+        end
+        function testTokenize_Parens(self)
+            tokens = self.lexer.tokenize('({[]})');
+            self.assertEqual({tokens.string}, {'(' '{' '[' ']' '}' ')'});
+            self.assertEqual(all(strcmp({tokens.type}, 'operator')), true);
         end
 
         function testTokenize_tokenHasIndex(self)
