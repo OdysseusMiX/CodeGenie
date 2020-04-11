@@ -2,7 +2,7 @@ classdef Refactor
     
     methods (Static)
         
-        function extractFunction(filename)
+        function file(filename)
             
             tokens = Parser.parseFile(filename);
             

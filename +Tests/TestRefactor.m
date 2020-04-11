@@ -20,11 +20,11 @@ classdef TestRefactor < matlab.unittest.TestCase
     end
     
     methods (Test)
-        function testExtractFunction_explicitFunction_noParameters(testCase)
+        function testFile_ExtractFunction_explicitFunction_noParameters(testCase)
             testFile = 'testFile.m';
             copyfile('printOwing_step1_before.m',testFile);
                         
-            Refactor.extractFunction(testFile);
+            Refactor.file(testFile);
             
             txtExpected = Parser.readFile('printOwing_step1_after.m');            
             txtActual = Parser.readFile(testFile);
@@ -34,11 +34,11 @@ classdef TestRefactor < matlab.unittest.TestCase
             delete(testFile);
         end
         
-        function testExtractFunction_toNestedFunction(testCase)
+        function testFile_ExtractFunction_toNestedFunction(testCase)
             testFile = 'testFile.m';
             copyfile('printOwing_step2_before.m',testFile);
             
-            Refactor.extractFunction(testFile);
+            Refactor.file(testFile);
             
             txtExpected = Parser.readFile('printOwing_step2_after.m');            
             txtActual = Parser.readFile(testFile);
@@ -48,11 +48,11 @@ classdef TestRefactor < matlab.unittest.TestCase
             delete(testFile);
         end
         
-        function testExtractFunction_withReferencedParameters(testCase)
+        function testFile_ExtractFunction_withReferencedParameters(testCase)
             testFile = 'testFile.m';
             copyfile('printOwing_step3_before.m',testFile);
             
-            Refactor.extractFunction(testFile);
+            Refactor.file(testFile);
             
             txtExpected = Parser.readFile('printOwing_step3_after.m');            
             txtActual = Parser.readFile(testFile);
