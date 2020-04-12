@@ -1,4 +1,7 @@
 classdef Parser
+    properties (Constant)
+        namesInPath = Parser.listProgramsInPath
+    end
     
     methods (Static)
         function tokens = parseFile(file)
@@ -66,6 +69,70 @@ classdef Parser
                     otherwise
                 end
                 
+            end
+        end
+        
+        function [inputs, outputs] = getArguments(tokens, knownNames)
+            if nargin<2
+                knownNames = {};
+            end
+            indLHS = Parser.determineAssignmentTokens(tokens);
+            indName = Parser.determineComplexNames(tokens);
+            
+            knownNames = [
+                knownNames
+                Parser.listProgramsInCurrentDir
+                Parser.namesInPath
+                ];
+            varsRead = {};
+            varsSet = {};
+            for i=1:length(tokens)
+                name = tokens(i).string;
+                if indName(i) && ~iskeyword(name)
+                    if indLHS(i)
+                        if ~any(strcmp(varsSet, name))
+                            varsSet = [varsSet; {name}];
+                        end
+                        if ~any(strcmp(knownNames, name))
+                            knownNames = [knownNames; {name}];
+                        end
+                    else
+                        if ~any(strcmp(varsRead, name)) && ...
+                                ~any(strcmp(knownNames, name))
+                            varsRead = [varsRead; {name}];
+                        end
+                    end
+                end
+            end
+            
+            inputs = varsRead;
+            outputs = varsSet;
+        end
+        
+        function result = listProgramsInPath
+            p = path;
+            pathDirectories = textscan(p,'%s','Delimiter',':');
+            pathDirectories = pathDirectories{1};
+            result = {};
+            for i=1:length(pathDirectories)
+                W = what(pathDirectories{i});
+                if length(W)>1
+                    W = W(end);
+                end
+                result = [result; W.m; W.mlapp; W.mlx; W.mat; W.mex; W.classes; W.packages];
+            end
+            for i=1:length(result)
+                [~,result{i}] = fileparts(result{i});
+            end
+        end
+        function result = listProgramsInCurrentDir
+            W = what(cd);
+            if length(W)>1
+                W = W(end);
+            end
+            result = [W.m; W.mlapp; W.mlx; W.mat; W.mex; W.classes; W.packages];
+            for i=1:length(result)
+                [~,result{i}] = fileparts(result{i});
             end
         end
         

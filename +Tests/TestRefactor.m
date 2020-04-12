@@ -61,7 +61,34 @@ classdef TestRefactor < matlab.unittest.TestCase
             
             delete(testFile);
         end
-end
-    
+        
+        function testFile_ExtractFunction_withReassignedLocalVar(testCase)
+            testFile = 'testFile.m';
+            copyfile('printOwing_step4_before.m',testFile);
+            
+            Refactor.file(testFile);
+            
+            txtExpected = Parser.readFile('printOwing_step4_after.m');
+            txtActual = Parser.readFile(testFile);
+            
+            testCase.assertEqual(txtActual, txtExpected);
+            
+            delete(testFile);
+        end
+        
+        function testFile_ExtractFunction_withReassignedParameter(testCase)
+            testFile = 'testFile.m';
+            copyfile('printOwing_step5_before.m',testFile);
+            
+            Refactor.file(testFile);
+            
+            txtExpected = Parser.readFile('printOwing_step5_after.m');
+            txtActual = Parser.readFile(testFile);
+            
+            testCase.assertEqual(txtActual, txtExpected);
+            
+            delete(testFile);
+        end
+    end
 end
 

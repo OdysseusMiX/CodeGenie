@@ -137,5 +137,46 @@ classdef TestParser < matlab.unittest.TestCase
             tokens = Parser.parseFile(file);
             testCase.assertEqual({tokens.string}, {'function',' ','simpleFunction',newline,newline,'end'});
         end
+        
+        function testFindAllReferencedNames(testCase)
+            tokens = Parser.parse('x=y');
+            names = Parser.findAllReferencedNames(tokens);
+            testCase.assertEqual(names, {'y'});
+        end
+        
+        function testGetArguments_allAreArguments(testCase)
+            tokens = Parser.parse('x=y');
+            
+            [inputs, outputs] = Parser.getArguments(tokens);
+            
+            testCase.assertEqual(inputs, {'y'});
+            testCase.assertEqual(outputs, {'x'});
+        end
+        function testGetArguments_excludesProgramsInPath(testCase)
+            tokens = Parser.parse('x=sprintf(''%s'',y)');
+            
+            [inputs, outputs] = Parser.getArguments(tokens);
+            
+            testCase.assertEqual(inputs, {'y'});
+            testCase.assertEqual(outputs, {'x'});
+        end
+        function testGetArguments_excludesProgramsInCurrentDir(testCase)
+            % FIXME: Should specify dir for when refactoring files and cd is not the expected path
+            tokens = Parser.parse('x=Tests.sprintf(''%s'',y)');
+            
+            [inputs, outputs] = Parser.getArguments(tokens);
+            
+            testCase.assertEqual(inputs, {'y'});
+            testCase.assertEqual(outputs, {'x'});
+        end
+        function testGetArguments_excludesKnownNamesInput(testCase)
+            knownNames = {'myFunction'};
+            tokens = Parser.parse('x=myFunction(''%s'',y)');
+            
+            [inputs, outputs] = Parser.getArguments(tokens, knownNames);
+            
+            testCase.assertEqual(inputs, {'y'});
+            testCase.assertEqual(outputs, {'x'});
+        end
     end
 end
