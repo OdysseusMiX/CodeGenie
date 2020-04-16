@@ -81,7 +81,6 @@ classdef Parser
             
             knownNames = [
                 knownNames
-                Parser.listProgramsInCurrentDir
                 Parser.namesInPath
                 ];
             varsRead = {};
@@ -109,6 +108,73 @@ classdef Parser
             outputs = varsSet;
         end
         
+        function [results, levels] = listProgramsInFile(filename)
+            % FIXME: I should use named scopes instead of closure levels
+            [~, name] = fileparts(filename);
+            results = {name};
+            levels = 1;
+            
+            tokens = Parser.parseFile(filename);
+            maybeScript = true;
+            i = 0;
+            while i<length(tokens)
+                i = i+1;
+                if strcmp(tokens(i).type, 'word')
+                    switch tokens(i).string
+                        case 'function'
+                            if maybeScript
+                                maybeScript = false;
+                                continue;
+                            else
+                                levels = [levels; tokens(i).closureLevel - 1];
+                                [subfunction, i] = findSubfunctionName(tokens, i);
+                                results = [results; {subfunction}];
+                            end
+                        case 'classdef'
+                            maybeScript = false;
+                    end
+                end
+            end
+            
+            function [subfunction, i] = findSubfunctionName(tokens, start)
+                parenCount = 0;
+                i = start;
+                hasAssignment = false;
+                while i<length(tokens)
+                    i = i+1;
+                    if strcmp(tokens(i).string, '=')
+                        hasAssignment = true;
+                    elseif strcmp(tokens(i).string, newline) || strcmp(tokens(i).string, ';')
+                        break;
+                    end
+                end
+                
+                i = start;
+                waitForSecondWord = hasAssignment;
+                while i<length(tokens)
+                    i = i+1;
+                    switch tokens(i).type
+                        case 'word'
+                            if parenCount==0 && ~waitForSecondWord
+                                subfunction = tokens(i).string;
+                                return;
+                            end
+                        case 'operator'
+                            switch tokens(i).string
+                                case {'(' '['}
+                                    parenCount = parenCount+1;
+                                case {')' ']'}
+                                    parenCount = parenCount-1;
+                                case '='
+                                    waitForSecondWord = false;
+                            end
+                        case 'newline'
+                            break
+                    end
+                end
+            end
+        end
+        
         function result = listProgramsInPath
             p = path;
             pathDirectories = textscan(p,'%s','Delimiter',':');
@@ -126,7 +192,10 @@ classdef Parser
             end
         end
         function result = listProgramsInCurrentDir
-            W = what(cd);
+            result = Parser.listProgramsIn(cd);
+        end
+        function result = listProgramsIn(directory)
+            W = what(directory);
             if length(W)>1
                 W = W(end);
             end

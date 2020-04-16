@@ -20,15 +20,24 @@ classdef Refactor
                 index = indStart(1):indStop(1);
                 extractToNestedFunction(tokens, index, filename);
             end
+            
+            indStart = find(strncmp('%<inline>', {tokens.string}, 7));
+            if ~isempty(indStart)
+                index = indStart(1);
+                inlineFunction(tokens, index, filename);
+            end
         end
     end
 end
 
 function extractToEndOfFile(tokens, index, filename)
+fileLocation = fileparts(which(filename));
+
+localNames = Parser.listProgramsIn(fileLocation);
 
 functionCall = tokens(index(1)).string(11:end);
 
-[inputs, outputs] = getArguments(tokens, index);
+[inputs, outputs] = getArguments(tokens, index, localNames);
 
 functionCall = decorateFunctionCall(functionCall, inputs, outputs);
 
@@ -37,8 +46,9 @@ txt = getRefactoredText(tokens, index, functionCall);
 overwriteFile(filename, txt);
 
 
-    function [inputs, outputs] = getArguments(tokens, index)
-        [inputs, outputs] = Parser.getArguments(tokens(index));
+    function [inputs, outputs] = getArguments(tokens, index, localNames)
+        
+        [inputs, outputs] = Parser.getArguments(tokens(index), localNames);
         
         % Add inputs for outputs that are reassignments of known variables
         [usedBefore_inputs, usedBefore_outputs] = Parser.getArguments(tokens(1:(index(1)-1)));
@@ -102,6 +112,84 @@ overwriteFile(filename, txt);
         txt_after = [tokens(indInsert:nTokens).string];
         txt = [txt_before_extraction, txt_replacement, txt_before_end, newline, txt_extracted, txt_after ];
     end
+end
+
+function inlineFunction(tokens, index, filename)
+
+functionName = tokens(index).string(10:end);
+
+funcFile = which(functionName);
+if isempty(funcFile)
+    [results] = Parser.listProgramsInFile(filename);
+    if any(strcmp(functionName, results))
+        % Function def is in file
+        indFunc = find(strcmp({tokens.string},'function'));
+        indNewline = find(strcmp({tokens.type},'newline'));
+        indEndOfFunction = [];
+        for i=1:length(indFunc)
+            indBeginOfFunction = indFunc(i);
+            indNewlinesAfterFuncDef = indNewline(indBeginOfFunction<indNewline);
+            ii = indNewlinesAfterFuncDef(1);
+            parenCount = 0;
+            while ii>indFunc(i)
+                ii = ii-1;
+                if strcmp(tokens(ii).string,'(')
+                    parenCount = parenCount-1;
+                    continue;
+                elseif strcmp(tokens(ii).string,')')
+                    parenCount = parenCount+1;
+                    continue;
+                elseif parenCount == 0 && strcmp(tokens(ii).type,'word')
+                    temp = tokens(ii).string;
+                    break;
+                end
+            end
+            if strcmp(temp, functionName)
+                % Found function def
+                closureCount = 1;
+                while ii<length(tokens)
+                    ii = ii+1;
+                    switch tokens(ii).string
+                        case {'function','if','switch','while','for','try'}
+                            closureCount = closureCount+1;
+                        case 'end'
+                            closureCount = closureCount-1;
+                            if closureCount == 0
+                                indEndOfFunction = ii;
+                                break;
+                            end
+                    end
+                end
+            end
+            if ~isempty(indEndOfFunction)
+                break;
+            end
+        end
+        funcTokens = tokens(indBeginOfFunction:indEndOfFunction);
+        
+    else
+        % Cannot find function def
+        error('Refactor:CannotInline:UnknownFunction','Cannot find definition of %s',functionName)
+    end
+else
+    funcTokens = Parser.parseFile(funcFile);
+end
+
+% Find end of function signature
+ii = 1;
+while ii<length(funcTokens)
+    ii = ii+1;
+    if strcmp(funcTokens(ii).type,'newline')
+        break;
+    end
+end
+
+if any(strcmp({funcTokens(ii:end).string},functionName))
+    warning('Refactor:CannotInline:Recursive','Cannot inline %s because it is recursive',functionName);
+end
+
+warning('Refactor:CannotInline:MultipleReturnPoints','Cannot inline %s because it has multiple return points',functionName)
+
 end
 
 function indInsert = findEndOfCurrentFunctionOrScript(tokens, startIndex)

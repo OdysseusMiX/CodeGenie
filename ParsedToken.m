@@ -4,7 +4,7 @@ classdef ParsedToken
         string
         index
         type
-        closureLevel
+        closureLevel    % FIXME: I should use named scopes instead of closure levels
         statementNumber
     end
     methods

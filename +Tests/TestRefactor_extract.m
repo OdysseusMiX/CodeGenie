@@ -1,4 +1,4 @@
-classdef TestRefactor < matlab.unittest.TestCase
+classdef TestRefactor_extract < matlab.unittest.TestCase
     
     properties
         oldpath
@@ -20,7 +20,11 @@ classdef TestRefactor < matlab.unittest.TestCase
     end
     
     methods (Test)
-        function testFile_ExtractFunction_explicitFunction_noParameters(testCase)
+        function testFile_implicitFunction(testCase)
+            testCase.assertFail;
+        end
+        
+        function testFile_explicitFunction_noParameters(testCase)
             testFile = 'testFile.m';
             copyfile('printOwing_step1_before.m',testFile);
                         
@@ -34,7 +38,7 @@ classdef TestRefactor < matlab.unittest.TestCase
             delete(testFile);
         end
         
-        function testFile_ExtractFunction_toNestedFunction(testCase)
+        function testFile_toNestedFunction(testCase)
             testFile = 'testFile.m';
             copyfile('printOwing_step2_before.m',testFile);
             
@@ -48,7 +52,7 @@ classdef TestRefactor < matlab.unittest.TestCase
             delete(testFile);
         end
         
-        function testFile_ExtractFunction_withReferencedParameters(testCase)
+        function testFile_withReferencedParameters(testCase)
             testFile = 'testFile.m';
             copyfile('printOwing_step3_before.m',testFile);
             
@@ -62,7 +66,7 @@ classdef TestRefactor < matlab.unittest.TestCase
             delete(testFile);
         end
         
-        function testFile_ExtractFunction_withReassignedLocalVar(testCase)
+        function testFile_withReassignedLocalVar(testCase)
             testFile = 'testFile.m';
             copyfile('printOwing_step4_before.m',testFile);
             
@@ -76,7 +80,7 @@ classdef TestRefactor < matlab.unittest.TestCase
             delete(testFile);
         end
         
-        function testFile_ExtractFunction_withReassignedParameter(testCase)
+        function testFile_withReassignedParameter(testCase)
             testFile = 'testFile.m';
             copyfile('printOwing_step5_before.m',testFile);
             
@@ -89,6 +93,7 @@ classdef TestRefactor < matlab.unittest.TestCase
             
             delete(testFile);
         end
+        
     end
 end
 

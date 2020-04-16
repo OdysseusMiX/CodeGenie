@@ -161,10 +161,10 @@ classdef TestParser < matlab.unittest.TestCase
             testCase.assertEqual(outputs, {'x'});
         end
         function testGetArguments_excludesProgramsInCurrentDir(testCase)
-            % FIXME: Should specify dir for when refactoring files and cd is not the expected path
             tokens = Parser.parse('x=Tests.sprintf(''%s'',y)');
             
-            [inputs, outputs] = Parser.getArguments(tokens);
+            localNames = Parser.listProgramsIn(cd);
+            [inputs, outputs] = Parser.getArguments(tokens, localNames);
             
             testCase.assertEqual(inputs, {'y'});
             testCase.assertEqual(outputs, {'x'});
@@ -177,6 +177,23 @@ classdef TestParser < matlab.unittest.TestCase
             
             testCase.assertEqual(inputs, {'y'});
             testCase.assertEqual(outputs, {'x'});
+        end
+        
+        function testListProgramsInFile_findsSubfunctions(testCase)
+            [localNames, levels] = Parser.listProgramsInFile('Example1/printOwing_step5_before.m');
+
+            testCase.assertEqual(localNames, {
+                'printOwing_step5_before'
+                'printBanner'
+                'printDetails'
+                'calculateOutstanding'
+                });
+            testCase.assertEqual(levels, [
+                1
+                1
+                1
+                1
+                ]);
         end
     end
 end
