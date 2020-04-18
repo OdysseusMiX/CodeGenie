@@ -50,7 +50,7 @@ classdef Parser
                                 closureStack = [closureStack nClosures];
                                 closureID = closureStack(end);
                                 statementCount(closureID) = 1;
-                                result(i).closureLevel = closureID;
+                                result(i).closureID = closureID;
                                 result(i).statementNumber = statementCount(closureID);
                             case 'end'
                                 if parenCount==0
@@ -161,7 +161,7 @@ classdef Parser
                                 maybeScript = false;
                                 continue;
                             else
-                                levels = [levels; tokens(i).closureLevel - 1];
+                                levels = [levels; tokens(i).closureID - 1];
                                 [subfunction, i] = findSubfunctionName(tokens, i);
                                 results = [results; {subfunction}];
                             end

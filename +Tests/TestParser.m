@@ -20,7 +20,7 @@ classdef TestParser < matlab.unittest.TestCase
             self.assertEqual(tokens.string, '1');
             self.assertEqual(tokens.type, 'integer');
             self.assertEqual(tokens.index, 1);
-            self.assertEqual(tokens.closureLevel, 1);
+            self.assertEqual(tokens.closureID, 1);
             self.assertEqual(tokens.statementNumber, 1);
         end
         function testParse_twoStatement(self)
@@ -29,70 +29,70 @@ classdef TestParser < matlab.unittest.TestCase
             self.assertEqual({tokens.string}, {'1' ';' '2' ';'});
             self.assertEqual({tokens.type}, {'integer' 'operator' 'integer' 'operator'});
             self.assertEqual([tokens.index], 1:4);
-            self.assertEqual([tokens.closureLevel], [1 1 1 1]);
+            self.assertEqual([tokens.closureID], [1 1 1 1]);
             self.assertEqual([tokens.statementNumber], [1 1 2 2]);
         end
         function testParse_dotNotation(self)
             txt = sprintf('s.f=2');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'s' '.' 'f' '=' '2'});
-            self.assertEqual([tokens.closureLevel], [1 1 1 1 1]);
+            self.assertEqual([tokens.closureID], [1 1 1 1 1]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1]);
         end
         function testParse_includesSpaces(self)
             txt = sprintf('s.f = 2');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'s','.','f',' ','=',' ','2'});
-            self.assertEqual([tokens.closureLevel], [1 1 1 1 1 1 1]);
+            self.assertEqual([tokens.closureID], [1 1 1 1 1 1 1]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1 1]);
         end
         function testParse_endInsideParenIsNotClosureEnd(self)
             txt = sprintf('s(1:end)');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'s' '(' '1' ':' 'end' ')'});
-            self.assertEqual([tokens.closureLevel], [1 1 1 1 1 1]);
+            self.assertEqual([tokens.closureID], [1 1 1 1 1 1]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1]);
         end
         function testParse_endInsideBracketsIsNotClosureEnd(self)
             txt = sprintf('s[1:end]');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'s' '[' '1' ':' 'end' ']'});
-            self.assertEqual([tokens.closureLevel], [1 1 1 1 1 1]);
+            self.assertEqual([tokens.closureID], [1 1 1 1 1 1]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1]);
         end
         function testParse_endInsideBracesIsNotClosureEnd(self)
             txt = sprintf('s{1:end}');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'s' '{' '1' ':' 'end' '}'});
-            self.assertEqual([tokens.closureLevel], [1 1 1 1 1 1]);
+            self.assertEqual([tokens.closureID], [1 1 1 1 1 1]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1]);
         end
         function testParse_functionClojure(self)
             txt = sprintf('function test\nx=1;\nend');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'function',' ','test' newline 'x' '=' '1' ';' newline 'end'});
-            self.assertEqual([tokens.closureLevel], [2 2 2 2 2 2 2 2 2 2]);
+            self.assertEqual([tokens.closureID], [2 2 2 2 2 2 2 2 2 2]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 2 2 2 2 3 4]);
         end
         function testParse_classdefClojure(self)
             txt = sprintf('classdef test\nproperties\nend\nend');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'classdef',' ','test' newline 'properties' newline 'end' newline 'end'});
-            self.assertEqual([tokens.closureLevel], [2 2 2 2 3 3 3 2 2]);
+            self.assertEqual([tokens.closureID], [2 2 2 2 3 3 3 2 2]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1 2 2 3]);
         end
         function testParse_propertiesClojure(self)
             txt = sprintf('classdef test\nproperties\nend\nend');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'classdef',' ','test' newline 'properties' newline 'end' newline 'end'});
-            self.assertEqual([tokens.closureLevel], [2 2 2 2 3 3 3 2 2]);
+            self.assertEqual([tokens.closureID], [2 2 2 2 3 3 3 2 2]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1 2 2 3]);
         end
         function testParse_methodsClojure(self)
             txt = sprintf('classdef test\nmethods\nend\nend');
             tokens = Parser.parse(txt);
             self.assertEqual({tokens.string}, {'classdef',' ','test' newline 'methods' newline 'end' newline 'end'});
-            self.assertEqual([tokens.closureLevel], [2 2 2 2 3 3 3 2 2]);
+            self.assertEqual([tokens.closureID], [2 2 2 2 3 3 3 2 2]);
             self.assertEqual([tokens.statementNumber], [1 1 1 1 1 1 2 2 3]);
         end
         function testParse_nestedFunctionClojure(self)
@@ -122,7 +122,7 @@ classdef TestParser < matlab.unittest.TestCase
             };
             statements = Parser.parse(txt);
             self.assertEqual({statements.string}, table(:,1)');
-            self.assertEqual({statements.closureLevel}, table(:,2)');
+            self.assertEqual({statements.closureID}, table(:,2)');
             self.assertEqual({statements.statementNumber}, table(:,3)');
         end
         

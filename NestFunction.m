@@ -28,12 +28,12 @@ indInsert = findBottomOfLevel(tokens, funcLevel, startIndex);
 end
 
 function funcLevel = findTopLevel(tokens, startIndex)
-funcLevel = tokens(1).closureLevel; % default
+funcLevel = tokens(1).closureID; % default
 i = startIndex;
 while i>1
     i = i-1;
     if strcmp(tokens(i).string, 'function')
-        funcLevel = tokens(i).closureLevel;
+        funcLevel = tokens(i).closureID;
         break
     end
 end
@@ -43,7 +43,7 @@ i = startIndex;
 parenCount = 0;
 while i<length(tokens)
     i = i+1;
-    if tokens(i).closureLevel == funcLevel
+    if tokens(i).closureID == funcLevel
         if parenCount==0 && strcmp(tokens(i).string, 'end')
             indInsert = i;
             break

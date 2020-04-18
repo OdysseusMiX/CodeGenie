@@ -4,13 +4,13 @@ classdef ParsedToken
         string
         index
         type
-        closureLevel    % FIXME: I should use named scopes instead of closure levels
+        closureID
         statementNumber
         isLeftHandSide
         isName
     end
     methods
-        function obj = ParsedToken(token, closureLevel, statementNumber)
+        function obj = ParsedToken(token, closureID, statementNumber)
             if nargin<1
                 return;
             end
@@ -18,7 +18,7 @@ classdef ParsedToken
             obj.string = token.string;
             obj.index = token.index;
             obj.type = token.type;
-            obj.closureLevel = closureLevel;
+            obj.closureID = closureID;
             obj.statementNumber = statementNumber;
         end
     end
