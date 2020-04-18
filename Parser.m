@@ -72,8 +72,10 @@ classdef Parser
             end
             
             indLHS = Parser.determineAssignmentTokens(result);
+            indName = Parser.determineComplexNames(result);
             for i=1:length(result)
                 result(i).isLeftHandSide = indLHS(i);
+                result(i).isName = indName(i);
             end
         end
         function indLHS = determineAssignmentTokens(tokens)
@@ -106,7 +108,6 @@ classdef Parser
             if nargin<2
                 knownNames = {};
             end
-            indName = Parser.determineComplexNames(tokens);
             
             knownNames = [
                 knownNames
@@ -116,7 +117,7 @@ classdef Parser
             varsSet = {};
             for i=1:length(tokens)
                 name = tokens(i).string;
-                if indName(i) && ~iskeyword(name)
+                if tokens(i).isName && ~iskeyword(name)
                     if tokens(i).isLeftHandSide
                         if ~any(strcmp(varsSet, name))
                             varsSet = [varsSet; {name}];
@@ -235,13 +236,11 @@ classdef Parser
         end
         
         function referencedNames = findAllReferencedNames(tokens)
-            indLHS = [tokens.isLeftHandSide];
-            indName = Parser.determineComplexNames(tokens);
             
             knownNames = {'fprintf'};
             referencedNames = {};
             for i=1:length(tokens)
-                if ~indLHS(i) && indName(i)
+                if ~tokens(i).isLeftHandSide && tokens(i).isName
                     name = tokens(i).string;
                     if ~iskeyword(name) && ...
                             ~any(strcmp(referencedNames, name)) && ...
