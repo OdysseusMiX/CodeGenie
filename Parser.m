@@ -76,38 +76,13 @@ classdef Parser
                 
             end
             
-            indLHS = Parser.determineAssignmentTokens(result);
-            indName = Parser.determineComplexNames(result);
+            indLHS = determineAssignmentTokens(result);
+            indName = determineComplexNames(result);
             for i=1:length(result)
                 result(i).isLeftHandSide = indLHS(i);
                 result(i).isName = indName(i);
             end
         end
-        function indLHS = determineAssignmentTokens(tokens)
-            indLHS = false(size(tokens));
-            isLHS = false;
-            for i=length(tokens):-1:1
-                indLHS(i) = isLHS;
-                if strcmp(tokens(i).string,'=')
-                    isLHS = ~isLHS;
-                elseif isLHS && any(strcmp(tokens(i).string, {newline, ';'}))
-                    isLHS = false;
-                end
-            end
-        end        
-        function indName = determineComplexNames(tokens)
-            indName = strcmp({tokens.type},'word');
-            i = length(tokens);
-            while i>1
-                if indName(i)
-                    if i>1 && strcmp(tokens(i-1).string,'.')
-                        indName(i) = false;
-                    end
-                end
-                i = i-1;
-            end
-        end
-        
         
         function [inputs, outputs] = getArguments(tokens, knownNames)
             if nargin<2
@@ -256,6 +231,92 @@ classdef Parser
             end
         end
         
+        function [funcTokens, index] = parseFunction(functionName, filename, tokens)
+            index = [];
+            funcFile = which(functionName);
+            if isempty(funcFile)
+                [results] = Parser.listProgramsInFile(filename);
+                if any(strcmp(functionName, results))
+                    % Function def is in file
+                    indFunc = find(strcmp({tokens.string},'function'));
+                    indNewline = find(strcmp({tokens.type},'newline'));
+                    indEndOfFunction = [];
+                    for i=1:length(indFunc)
+                        indBeginOfFunction = indFunc(i);
+                        indNewlinesAfterFuncDef = indNewline(indBeginOfFunction<indNewline);
+                        ii = indNewlinesAfterFuncDef(1);
+                        parenCount = 0;
+                        while ii>indFunc(i)
+                            ii = ii-1;
+                            if strcmp(tokens(ii).string,'(')
+                                parenCount = parenCount-1;
+                                continue;
+                            elseif strcmp(tokens(ii).string,')')
+                                parenCount = parenCount+1;
+                                continue;
+                            elseif parenCount == 0 && strcmp(tokens(ii).type,'word')
+                                temp = tokens(ii).string;
+                                break;
+                            end
+                        end
+                        if strcmp(temp, functionName)
+                            % Found function def
+                            closureCount = 1;
+                            while ii<length(tokens)
+                                ii = ii+1;
+                                switch tokens(ii).string
+                                    case {'function','if','switch','while','for','try'}
+                                        closureCount = closureCount+1;
+                                    case 'end'
+                                        closureCount = closureCount-1;
+                                        if closureCount == 0
+                                            indEndOfFunction = ii;
+                                            break;
+                                        end
+                                end
+                            end
+                        end
+                        if ~isempty(indEndOfFunction)
+                            break;
+                        end
+                    end
+                    index = indBeginOfFunction:indEndOfFunction;
+                    funcTokens = tokens(index);
+                    
+                else
+                    % Cannot find function def
+                    error('Refactor:CannotInline:UnknownFunction','Cannot find definition of %s',functionName)
+                end
+            else
+                funcTokens = Parser.parseFile(funcFile);
+            end
+        end
+        
+        
     end
 end
 
+function indLHS = determineAssignmentTokens(tokens)
+indLHS = false(size(tokens));
+isLHS = false;
+for i=length(tokens):-1:1
+    indLHS(i) = isLHS;
+    if strcmp(tokens(i).string,'=')
+        isLHS = ~isLHS;
+    elseif isLHS && any(strcmp(tokens(i).string, {newline, ';'}))
+        isLHS = false;
+    end
+end
+end
+function indName = determineComplexNames(tokens)
+indName = strcmp({tokens.type},'word');
+i = length(tokens);
+while i>1
+    if indName(i)
+        if i>1 && strcmp(tokens(i-1).string,'.')
+            indName(i) = false;
+        end
+    end
+    i = i-1;
+end
+end
