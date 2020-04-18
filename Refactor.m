@@ -37,7 +37,7 @@ localNames = Parser.listProgramsIn(fileLocation);
 
 functionCall = tokens(index(1)).string(11:end);
 
-[inputs, outputs] = getArguments(tokens, index, localNames);
+[inputs, outputs] = getArgumentsForExtractedCode(tokens, index, localNames);
 
 functionCall = decorateFunctionCall(functionCall, inputs, outputs);
 
@@ -45,8 +45,7 @@ txt = getRefactoredText(tokens, index, functionCall);
 
 overwriteFile(filename, txt);
 
-
-    function [inputs, outputs] = getArguments(tokens, index, localNames)
+    function [inputs, outputs] = getArgumentsForExtractedCode(tokens, index, localNames)
         
         [inputs, outputs] = Parser.getArguments(tokens(index), localNames);
         
@@ -96,7 +95,7 @@ end
 function extractToNestedFunction(tokens, index, filename)
 
 functionCall = tokens(index(1)).string(8:end);
-        
+
 indInsert = findEndOfCurrentFunctionOrScript(tokens, index(1));
 
 txt = getRefactoredText(tokens, index, indInsert, functionCall);
@@ -118,88 +117,16 @@ function inlineFunction(tokens, index, filename)
 
 functionName = tokens(index).string(10:end);
 
-% Find index for caller tokens
-indCaller = index;
-while indCaller>1
-    indCaller = indCaller-1;
-    if strcmp(tokens(indCaller).string, functionName)
-        break;
-    end
-end
-if strcmp(tokens(indCaller+1).string, '(')
-    cursor2 = indCaller+1;
-    parenCount = 0;
-    while cursor2<index
-        cursor2 = cursor2+1;
-        if parenCount == 0 && strcmp(tokens(cursor2).string, ')')
-            break;
-        elseif strcmp(tokens(cursor2).string, '(')
-            parenCount = parenCount+1;
-        elseif strcmp(tokens(cursor2).string, ')')
-            parenCount = parenCount-1;
-        end
-    end
-    assert(cursor2<index)
-    indCallerTokens = indCaller:cursor2;
-else
-    indCallerTokens = indCaller;
-end
-assert(strcmp(tokens(indCallerTokens(1)).string, functionName),'Failed to find caller to %s', functionName);
+indCallerTokens = findIndexOfCallerToken(index, tokens, functionName);
 
 funcTokens = parseFunction(functionName, filename, tokens); % TODO: Move to Parser
-indStatements = true(size(funcTokens));
 
-indEndOfSig = findEndOfFunctionSignature(funcTokens); % TODO: Move to Parser
-
-if any(strcmp({funcTokens(indEndOfSig:end).string},functionName))
-    error('Refactor:CannotInline:Recursive','Cannot inline %s because it is recursive',functionName);
-end
-
-if sum(strcmp({funcTokens(indEndOfSig:end).string},'return'))>0
-    error('Refactor:CannotInline:MultipleReturnPoints','Cannot inline %s because it has multiple return points',functionName)
-end
+verifyCanInlineFunction(funcTokens, functionName);
 
 % do refactoring
-% find end of statements
-ii = length(funcTokens);
-while ii>indEndOfSig
-    ii = ii-1;
-    if strcmp(funcTokens(ii+1).string, 'end')
-        while any(strcmp(funcTokens(ii).type, {'whitespace','newline'}))
-            ii = ii-1;
-        end
-        if strcmp(funcTokens(ii).string, ';')
-            ii = ii-1;
-        end
-        break;
-    end    
-end
-indStatements(ii+1:end) = false;
 
-while any(strcmp(funcTokens(indEndOfSig).type, {'whitespace','newline'}))
-    indEndOfSig = indEndOfSig+1;
-end
-indEndOfSig = indEndOfSig-1;
-indStatements(1:indEndOfSig) = false;
-
-[~,outputs] = Parser.getArguments(funcTokens);
-if length(outputs)>1
-    error('multiple arguments returned'); % TODO: Add test for multiple return arguments
-elseif length(outputs)==1
-    % Remove 'result = '
-    indLastAssignment = findLastAssignmentToOutputIndex(funcTokens, outputs);
-    
-    nTokensToRemove = 1;
-    while ~strcmp(funcTokens(indLastAssignment+nTokensToRemove).string, '=')
-        nTokensToRemove = nTokensToRemove+1;
-    end
-    while any(strcmp(funcTokens(indLastAssignment+nTokensToRemove+1).type, {'whitespace','newline'}))
-        nTokensToRemove = nTokensToRemove+1;
-    end
-    indStatements(indLastAssignment:(indLastAssignment+nTokensToRemove)) = false;
-end
-
-replacementTokens = funcTokens(indStatements);
+% TODO: Move finding statement tokens to Parser
+statementTokens = getInlineStatementTokens(funcTokens);
 
 % Remove tag and function definition from file
 indKeep = true(size(tokens));
@@ -222,7 +149,7 @@ end
 % Replace caller tokens with replacement tokens
 refactored = [...
     trimmedTokens(1:indCallerTokens(1)-1),...
-    replacementTokens,...
+    statementTokens,...
     trimmedTokens(indCallerTokens(end)+1:end)...
     ];
 
@@ -280,7 +207,9 @@ while result<length(funcTokens)
         break;
     end
 end
-result = result+1;
+while any(strcmp(funcTokens(result+1).type, {'whitespace','newline'}))
+    result = result+1;
+end
 end
 
 function funcTokens = parseFunction(functionName, filename, tokens)
@@ -343,14 +272,104 @@ end
 end
 
 function indLastAssignment = findLastAssignmentToOutputIndex(funcTokens, outputs)
-    indOutput = find(strcmp({funcTokens.string},outputs{1}));
-    
-    % Last use of output might not be an assignment (ex. result = result+1)
-    indEquals = find(strcmp({funcTokens.string},'='));
-    iOutputToken = length(indOutput);
+indOutput = find(strcmp({funcTokens.string},outputs{1}));
+
+% Last use of output might not be an assignment (ex. result = result+1)
+indEquals = find(strcmp({funcTokens.string},'='));
+iOutputToken = length(indOutput);
+indLastAssignment = indOutput(iOutputToken);
+while indLastAssignment>indEquals(end)
+    iOutputToken = iOutputToken-1;
     indLastAssignment = indOutput(iOutputToken);
-    while indLastAssignment>indEquals(end)
-        iOutputToken = iOutputToken-1;
-        indLastAssignment = indOutput(iOutputToken);
+end
+end
+
+function indCallerTokens = findIndexOfCallerToken(index, tokens, functionName)
+indCaller = index;
+while indCaller>1
+    indCaller = indCaller-1;
+    if strcmp(tokens(indCaller).string, functionName)
+        break;
     end
+end
+if strcmp(tokens(indCaller+1).string, '(')
+    cursor2 = indCaller+1;
+    parenCount = 0;
+    while cursor2<index
+        cursor2 = cursor2+1;
+        if parenCount == 0 && strcmp(tokens(cursor2).string, ')')
+            break;
+        elseif strcmp(tokens(cursor2).string, '(')
+            parenCount = parenCount+1;
+        elseif strcmp(tokens(cursor2).string, ')')
+            parenCount = parenCount-1;
+        end
     end
+    assert(cursor2<index)
+    indCallerTokens = indCaller:cursor2;
+else
+    indCallerTokens = indCaller;
+end
+assert(strcmp(tokens(indCallerTokens(1)).string, functionName),'Failed to find caller to %s', functionName);
+end
+
+function indEndOfStatments = findEndOfStatementsIndex(funcTokens, indEndOfSig)
+indEndOfStatments = length(funcTokens);
+while indEndOfStatments>indEndOfSig
+    indEndOfStatments = indEndOfStatments-1;
+    if strcmp(funcTokens(indEndOfStatments+1).string, 'end')
+        while any(strcmp(funcTokens(indEndOfStatments).type, {'whitespace','newline'}))
+            indEndOfStatments = indEndOfStatments-1;
+        end
+        if strcmp(funcTokens(indEndOfStatments).string, ';')
+            indEndOfStatments = indEndOfStatments-1;
+        end
+        break;
+    end
+end
+end
+
+function indReturnAssignment = findReturnAssignmentIndices(funcTokens)
+indReturnAssignment = [];
+[~,outputs] = Parser.getArguments(funcTokens);
+if length(outputs)>1
+    error('multiple arguments returned'); % TODO: Add test for multiple return arguments
+elseif length(outputs)==1
+    % Remove 'result = '
+    indLastAssignment = findLastAssignmentToOutputIndex(funcTokens, outputs);
+    
+    nTokensToRemove = 1;
+    while ~strcmp(funcTokens(indLastAssignment+nTokensToRemove).string, '=')
+        nTokensToRemove = nTokensToRemove+1;
+    end
+    while any(strcmp(funcTokens(indLastAssignment+nTokensToRemove+1).type, {'whitespace','newline'}))
+        nTokensToRemove = nTokensToRemove+1;
+    end
+    indReturnAssignment = indLastAssignment:(indLastAssignment+nTokensToRemove);
+end
+end
+
+function [statementTokens] = getInlineStatementTokens(funcTokens)
+indStatements = true(size(funcTokens));
+
+indEndOfSig = findEndOfFunctionSignature(funcTokens);
+indStatements(1:indEndOfSig) = false;
+
+indEndOfStatments = findEndOfStatementsIndex(funcTokens, indEndOfSig);
+indStatements(indEndOfStatments+1:end) = false;
+
+indReturnAssignment = findReturnAssignmentIndices(funcTokens);
+indStatements(indReturnAssignment) = false;
+
+statementTokens = funcTokens(indStatements);
+end
+
+function verifyCanInlineFunction(funcTokens, functionName)
+if sum(strcmp({funcTokens.string},functionName))>1
+    error('Refactor:CannotInline:Recursive','Cannot inline %s because it is recursive',functionName);
+end
+
+if sum(strcmp({funcTokens.string},'return'))>0
+    error('Refactor:CannotInline:MultipleReturnPoints','Cannot inline %s because it has multiple return points',functionName)
+end
+end
