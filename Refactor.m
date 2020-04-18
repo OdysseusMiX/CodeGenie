@@ -182,14 +182,13 @@ end
 indEndOfSig = indEndOfSig-1;
 indStatements(1:indEndOfSig) = false;
 
-% TODO: remove assignment to return parameter(s)
 [~,outputs] = Parser.getArguments(funcTokens);
 if length(outputs)>1
     error('multiple arguments returned'); % TODO: Add test for multiple return arguments
 elseif length(outputs)==1
     % Remove 'result = '
-    indOutput = find(strcmp({funcTokens.string},outputs{1}));
-    indLastAssignment = indOutput(end);
+    indLastAssignment = findLastAssignmentToOutputIndex(funcTokens, outputs);
+    
     nTokensToRemove = 1;
     while ~strcmp(funcTokens(indLastAssignment+nTokensToRemove).string, '=')
         nTokensToRemove = nTokensToRemove+1;
@@ -342,3 +341,16 @@ else
     funcTokens = Parser.parseFile(funcFile);
 end
 end
+
+function indLastAssignment = findLastAssignmentToOutputIndex(funcTokens, outputs)
+    indOutput = find(strcmp({funcTokens.string},outputs{1}));
+    
+    % Last use of output might not be an assignment (ex. result = result+1)
+    indEquals = find(strcmp({funcTokens.string},'='));
+    iOutputToken = length(indOutput);
+    indLastAssignment = indOutput(iOutputToken);
+    while indLastAssignment>indEquals(end)
+        iOutputToken = iOutputToken-1;
+        indLastAssignment = indOutput(iOutputToken);
+    end
+    end
