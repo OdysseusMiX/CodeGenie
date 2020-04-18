@@ -6,6 +6,7 @@ classdef ParsedToken
         type
         closureLevel    % FIXME: I should use named scopes instead of closure levels
         statementNumber
+        isLeftHandSide
     end
     methods
         function obj = ParsedToken(token, closureLevel, statementNumber)

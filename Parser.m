@@ -70,13 +70,42 @@ classdef Parser
                 end
                 
             end
+            
+            indLHS = Parser.determineAssignmentTokens(result);
+            for i=1:length(result)
+                result(i).isLeftHandSide = indLHS(i);
+            end
         end
+        function indLHS = determineAssignmentTokens(tokens)
+            indLHS = false(size(tokens));
+            isLHS = false;
+            for i=length(tokens):-1:1
+                indLHS(i) = isLHS;
+                if strcmp(tokens(i).string,'=')
+                    isLHS = ~isLHS;
+                elseif isLHS && any(strcmp(tokens(i).string, {newline, ';'}))
+                    isLHS = false;
+                end
+            end
+        end        
+        function indName = determineComplexNames(tokens)
+            indName = strcmp({tokens.type},'word');
+            i = length(tokens);
+            while i>1
+                if indName(i)
+                    if i>1 && strcmp(tokens(i-1).string,'.')
+                        indName(i) = false;
+                    end
+                end
+                i = i-1;
+            end
+        end
+        
         
         function [inputs, outputs] = getArguments(tokens, knownNames)
             if nargin<2
                 knownNames = {};
             end
-            indLHS = Parser.determineAssignmentTokens(tokens);
             indName = Parser.determineComplexNames(tokens);
             
             knownNames = [
@@ -88,7 +117,7 @@ classdef Parser
             for i=1:length(tokens)
                 name = tokens(i).string;
                 if indName(i) && ~iskeyword(name)
-                    if indLHS(i)
+                    if tokens(i).isLeftHandSide
                         if ~any(strcmp(varsSet, name))
                             varsSet = [varsSet; {name}];
                         end
@@ -206,7 +235,7 @@ classdef Parser
         end
         
         function referencedNames = findAllReferencedNames(tokens)
-            indLHS = Parser.determineAssignmentTokens(tokens);
+            indLHS = [tokens.isLeftHandSide];
             indName = Parser.determineComplexNames(tokens);
             
             knownNames = {'fprintf'};
@@ -220,32 +249,6 @@ classdef Parser
                         referencedNames = [referencedNames; {name}];
                     end
                 end
-            end
-        end
-        
-        function indLHS = determineAssignmentTokens(tokens)
-            indLHS = false(size(tokens));
-            isLHS = false;
-            for i=length(tokens):-1:1
-                indLHS(i) = isLHS;
-                if strcmp(tokens(i).string,'=')
-                    isLHS = ~isLHS;
-                elseif isLHS && any(strcmp(tokens(i).string, {newline, ';'}))
-                    isLHS = false;
-                end
-            end
-        end
-        
-        function indName = determineComplexNames(tokens)
-            indName = strcmp({tokens.type},'word');
-            i = length(tokens);
-            while i>1
-                if indName(i)
-                    if i>1 && strcmp(tokens(i-1).string,'.')
-                        indName(i) = false;
-                    end
-                end
-                i = i-1;
             end
         end
         
