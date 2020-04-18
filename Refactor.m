@@ -119,41 +119,44 @@ functionName = tokens(index).string(10:end);
 
 indCallerTokens = findIndexOfCallerToken(index, tokens, functionName);
 
-funcTokens = parseFunction(functionName, filename, tokens); % TODO: Move to Parser
+[funcTokens, indFuncTokens] = parseFunction(functionName, filename, tokens); % TODO: Move to Parser
 
 verifyCanInlineFunction(funcTokens, functionName);
 
-% do refactoring
+statementTokens = getInlineStatementTokens(funcTokens); % TODO: Move finding statement tokens to Parser
 
-% TODO: Move finding statement tokens to Parser
-statementTokens = getInlineStatementTokens(funcTokens);
+trimmedTokens = trimTokens(tokens, index, indFuncTokens, indCallerTokens);
 
+txt = getRefactoredText_Inline(trimmedTokens, indCallerTokens, statementTokens);
+
+overwriteFile(filename, txt);
+end
+
+function result = trimTokens(tokens, index, indFuncTokens, indCallerTokens)
 % Remove tag and function definition from file
+% TODO: Maybe this shouldn't remove the def, or checks that all uses have
+% been inlined
 indKeep = true(size(tokens));
+
+cursor = indFuncTokens(end)+1;
+while cursor<=length(tokens) && any(strcmp(tokens(cursor).type, {'newline', 'whitespace'}))
+    cursor = cursor+1;
+end
+indFuncTokensExtended = indFuncTokens(1):cursor;
+indKeep(indFuncTokensExtended) = false;
+
 indKeep(index) = false;
 if strcmp(tokens(index-1).type, 'whitespace')
     indKeep(index-1) = false;
 end
 
-indFuncDef = 43:70; % TODO: Get from parseFunction, empty if function is not in file
-indKeep(indFuncDef) = false;
 if indCallerTokens(end)<find(~indKeep,1)
     % All tokens to delete are after caller tokens to replace
-    trimmedTokens = tokens(indKeep);
+    result = tokens(indKeep);
 else
     % Adjust indKeep to account for replacement of caller tokens
     error('not yet implemented');
 end
-
-
-% Replace caller tokens with replacement tokens
-refactored = [...
-    trimmedTokens(1:indCallerTokens(1)-1),...
-    statementTokens,...
-    trimmedTokens(indCallerTokens(end)+1:end)...
-    ];
-
-overwriteFile(filename, [refactored.string]);
 end
 
 function indInsert = findEndOfCurrentFunctionOrScript(tokens, startIndex)
@@ -212,7 +215,8 @@ while any(strcmp(funcTokens(result+1).type, {'whitespace','newline'}))
 end
 end
 
-function funcTokens = parseFunction(functionName, filename, tokens)
+function [funcTokens, index] = parseFunction(functionName, filename, tokens)
+index = [];
 funcFile = which(functionName);
 if isempty(funcFile)
     [results] = Parser.listProgramsInFile(filename);
@@ -260,7 +264,8 @@ if isempty(funcFile)
                 break;
             end
         end
-        funcTokens = tokens(indBeginOfFunction:indEndOfFunction);
+        index = indBeginOfFunction:indEndOfFunction;
+        funcTokens = tokens(index);
         
     else
         % Cannot find function def
@@ -372,4 +377,13 @@ end
 if sum(strcmp({funcTokens.string},'return'))>0
     error('Refactor:CannotInline:MultipleReturnPoints','Cannot inline %s because it has multiple return points',functionName)
 end
+end
+
+function txt = getRefactoredText_Inline(trimmedTokens, indCallerTokens, statementTokens)
+refactored = [...
+    trimmedTokens(1:indCallerTokens(1)-1),...
+    statementTokens,...
+    trimmedTokens(indCallerTokens(end)+1:end)...
+    ];
+txt = [refactored.string];
 end
