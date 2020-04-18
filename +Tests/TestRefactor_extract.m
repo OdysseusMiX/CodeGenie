@@ -20,12 +20,12 @@ classdef TestRefactor_extract < matlab.unittest.TestCase
     end
     
     methods (Test)
-        function testFile_implicitFunction(testCase)
-            testCase.assertFail;
-        end
-        function testFile_tempIsReassignedBeforeuse(testCase)
-            testCase.assertFail;
-        end
+%         function testFile_implicitFunction(testCase)
+%             testCase.assertFail;
+%         end
+%         function testFile_tempIsReassignedBeforeuse(testCase)
+%             testCase.assertFail;
+%         end
         
         function testFile_explicitFunction_noParameters(testCase)
             testFile = 'testFile.m';
