@@ -190,9 +190,9 @@ classdef TestParser < matlab.unittest.TestCase
                 });
             testCase.assertEqual(levels, [
                 1
-                1
-                1
-                1
+                2
+                3
+                4
                 ]);
         end
     end
