@@ -118,6 +118,173 @@ function inlineFunction(tokens, index, filename)
 
 functionName = tokens(index).string(10:end);
 
+% Find index for caller tokens
+indCaller = index;
+while indCaller>1
+    indCaller = indCaller-1;
+    if strcmp(tokens(indCaller).string, functionName)
+        break;
+    end
+end
+if strcmp(tokens(indCaller+1).string, '(')
+    cursor2 = indCaller+1;
+    parenCount = 0;
+    while cursor2<index
+        cursor2 = cursor2+1;
+        if parenCount == 0 && strcmp(tokens(cursor2).string, ')')
+            break;
+        elseif strcmp(tokens(cursor2).string, '(')
+            parenCount = parenCount+1;
+        elseif strcmp(tokens(cursor2).string, ')')
+            parenCount = parenCount-1;
+        end
+    end
+    assert(cursor2<index)
+    indCallerTokens = indCaller:cursor2;
+else
+    indCallerTokens = indCaller;
+end
+assert(strcmp(tokens(indCallerTokens(1)).string, functionName),'Failed to find caller to %s', functionName);
+
+funcTokens = parseFunction(functionName, filename, tokens); % TODO: Move to Parser
+indStatements = true(size(funcTokens));
+
+indEndOfSig = findEndOfFunctionSignature(funcTokens); % TODO: Move to Parser
+
+if any(strcmp({funcTokens(indEndOfSig:end).string},functionName))
+    error('Refactor:CannotInline:Recursive','Cannot inline %s because it is recursive',functionName);
+end
+
+if sum(strcmp({funcTokens(indEndOfSig:end).string},'return'))>0
+    error('Refactor:CannotInline:MultipleReturnPoints','Cannot inline %s because it has multiple return points',functionName)
+end
+
+% do refactoring
+% find end of statements
+ii = length(funcTokens);
+while ii>indEndOfSig
+    ii = ii-1;
+    if strcmp(funcTokens(ii+1).string, 'end')
+        while any(strcmp(funcTokens(ii).type, {'whitespace','newline'}))
+            ii = ii-1;
+        end
+        if strcmp(funcTokens(ii).string, ';')
+            ii = ii-1;
+        end
+        break;
+    end    
+end
+indStatements(ii+1:end) = false;
+
+while any(strcmp(funcTokens(indEndOfSig).type, {'whitespace','newline'}))
+    indEndOfSig = indEndOfSig+1;
+end
+indEndOfSig = indEndOfSig-1;
+indStatements(1:indEndOfSig) = false;
+
+% TODO: remove assignment to return parameter(s)
+[~,outputs] = Parser.getArguments(funcTokens);
+if length(outputs)>1
+    error('multiple arguments returned'); % TODO: Add test for multiple return arguments
+elseif length(outputs)==1
+    % Remove 'result = '
+    indOutput = find(strcmp({funcTokens.string},outputs{1}));
+    indLastAssignment = indOutput(end);
+    nTokensToRemove = 1;
+    while ~strcmp(funcTokens(indLastAssignment+nTokensToRemove).string, '=')
+        nTokensToRemove = nTokensToRemove+1;
+    end
+    while any(strcmp(funcTokens(indLastAssignment+nTokensToRemove+1).type, {'whitespace','newline'}))
+        nTokensToRemove = nTokensToRemove+1;
+    end
+    indStatements(indLastAssignment:(indLastAssignment+nTokensToRemove)) = false;
+end
+
+replacementTokens = funcTokens(indStatements);
+
+% Remove tag and function definition from file
+indKeep = true(size(tokens));
+indKeep(index) = false;
+if strcmp(tokens(index-1).type, 'whitespace')
+    indKeep(index-1) = false;
+end
+
+indFuncDef = 43:70; % TODO: Get from parseFunction, empty if function is not in file
+indKeep(indFuncDef) = false;
+if indCallerTokens(end)<find(~indKeep,1)
+    % All tokens to delete are after caller tokens to replace
+    trimmedTokens = tokens(indKeep);
+else
+    % Adjust indKeep to account for replacement of caller tokens
+    error('not yet implemented');
+end
+
+
+% Replace caller tokens with replacement tokens
+refactored = [...
+    trimmedTokens(1:indCallerTokens(1)-1),...
+    replacementTokens,...
+    trimmedTokens(indCallerTokens(end)+1:end)...
+    ];
+
+overwriteFile(filename, [refactored.string]);
+end
+
+function indInsert = findEndOfCurrentFunctionOrScript(tokens, startIndex)
+
+funcLevel = findTopLevel(tokens, startIndex);
+indInsert = findBottomOfLevel(tokens, funcLevel, startIndex);
+
+    function funcLevel = findTopLevel(tokens, startIndex)
+        funcLevel = tokens(1).closureLevel; % default
+        i = startIndex;
+        while i>1
+            i = i-1;
+            if strcmp(tokens(i).string, 'function')
+                funcLevel = tokens(i).closureLevel;
+                break
+            end
+        end
+    end
+    function indInsert = findBottomOfLevel(tokens, funcLevel, startIndex)
+        i = startIndex;
+        parenCount = 0;
+        while i<length(tokens)
+            i = i+1;
+            if tokens(i).closureLevel == funcLevel
+                if parenCount==0 && strcmp(tokens(i).string, 'end')
+                    indInsert = i;
+                    break
+                elseif any(strcmp(tokens(i).string, {'(','[','{'}))
+                    parenCount = parenCount+1;
+                elseif any(strcmp(tokens(i).string, {')',']','}'}))
+                    parenCount = parenCount-1;
+                end
+            end
+        end
+    end
+end
+
+function overwriteFile(filename, txt)
+fid = fopen(filename,'w');
+fprintf(fid,'%s', txt);
+fclose(fid);
+end
+
+function result = findEndOfFunctionSignature(funcTokens)
+assert(strcmp(funcTokens(1).string,'function'));
+
+result = 1;
+while result<length(funcTokens)
+    result = result+1;
+    if strcmp(funcTokens(result).type,'newline')
+        break;
+    end
+end
+result = result+1;
+end
+
+function funcTokens = parseFunction(functionName, filename, tokens)
 funcFile = which(functionName);
 if isempty(funcFile)
     [results] = Parser.listProgramsInFile(filename);
@@ -174,61 +341,4 @@ if isempty(funcFile)
 else
     funcTokens = Parser.parseFile(funcFile);
 end
-
-% Find end of function signature
-ii = 1;
-while ii<length(funcTokens)
-    ii = ii+1;
-    if strcmp(funcTokens(ii).type,'newline')
-        break;
-    end
-end
-
-if any(strcmp({funcTokens(ii:end).string},functionName))
-    warning('Refactor:CannotInline:Recursive','Cannot inline %s because it is recursive',functionName);
-end
-
-warning('Refactor:CannotInline:MultipleReturnPoints','Cannot inline %s because it has multiple return points',functionName)
-
-end
-
-function indInsert = findEndOfCurrentFunctionOrScript(tokens, startIndex)
-
-funcLevel = findTopLevel(tokens, startIndex);
-indInsert = findBottomOfLevel(tokens, funcLevel, startIndex);
-
-    function funcLevel = findTopLevel(tokens, startIndex)
-        funcLevel = tokens(1).closureLevel; % default
-        i = startIndex;
-        while i>1
-            i = i-1;
-            if strcmp(tokens(i).string, 'function')
-                funcLevel = tokens(i).closureLevel;
-                break
-            end
-        end
-    end
-    function indInsert = findBottomOfLevel(tokens, funcLevel, startIndex)
-        i = startIndex;
-        parenCount = 0;
-        while i<length(tokens)
-            i = i+1;
-            if tokens(i).closureLevel == funcLevel
-                if parenCount==0 && strcmp(tokens(i).string, 'end')
-                    indInsert = i;
-                    break
-                elseif any(strcmp(tokens(i).string, {'(','[','{'}))
-                    parenCount = parenCount+1;
-                elseif any(strcmp(tokens(i).string, {')',']','}'}))
-                    parenCount = parenCount-1;
-                end
-            end
-        end
-    end
-end
-
-function overwriteFile(filename, txt)
-fid = fopen(filename,'w');
-fprintf(fid,'%s', txt);
-fclose(fid);
 end

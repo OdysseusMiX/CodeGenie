@@ -37,7 +37,7 @@ classdef TestRefactor_inline < matlab.unittest.TestCase
             
             action = @() Refactor.file(testCase.testFile);
             
-            testCase.assertWarning(action, 'Refactor:CannotInline:Recursive')
+            testCase.assertError(action, 'Refactor:CannotInline:Recursive')
         end
         
         function testFile_multipleReturnPoints_error(testCase)
@@ -45,10 +45,44 @@ classdef TestRefactor_inline < matlab.unittest.TestCase
             
             action = @() Refactor.file(testCase.testFile);
             
-            testCase.assertWarning(action, 'Refactor:CannotInline:MultipleReturnPoints')
+            testCase.assertError(action, 'Refactor:CannotInline:MultipleReturnPoints')
         end
+        
+%         function testFile_noFunctionNameAfterTag(testCase)
+%             testCase.assertFail;
+%         end
+%         function testFile_invalidFunctionNameAfterTag(testCase)
+%             testCase.assertFail;
+%         end
+%         function testFile_invalidTextAfterTag(testCase)
+%             testCase.assertFail;
+%         end
+        
+%         function testFile_usesReturnButHasOneReturnPoint_okay(testCase)
+%             copyfile('returnsInTwoPlaces.m',testCase.testFile);
+%             
+%             action = @() Refactor.file(testCase.testFile);
+%             
+%             testCase.assertError(action, 'Refactor:CannotInline:MultipleReturnPoints')
+%         end
 %         
 %         function testFile_intoMethodWithNoAccessors_error(testCase)
+%             testCase.assertFail;
+%         end
+%         
+%         function testFile_methodIsPolymorphic_error(testCase)
+%             testCase.assertFail;
+%         end
+%         
+%         function testFile_isWithinParens_error(testCase)
+%             testCase.assertFail;
+%         end
+%         
+%         function testFile_isWithinBraces_error(testCase)
+%             testCase.assertFail;
+%         end
+%         
+%         function testFile_isWithinBrackets_error(testCase)
 %             testCase.assertFail;
 %         end
 %         
@@ -57,16 +91,16 @@ classdef TestRefactor_inline < matlab.unittest.TestCase
 %         end
 %         
 %         
-%         function testFile_Inline_simplest(testCase)
-%             copyfile('rating_step1_before.m',testCase.testFile);
-%                         
-%             Refactor.file(testCase.testFile);
-%             
-%             txtExpected = Parser.readFile('rating_step1_after.m');            
-%             txtActual = Parser.readFile(testCase.testFile);
-%             
-%             testCase.assertEqual(txtActual, txtExpected);
-%         end
+        function testFile_Inline_simplest(testCase)
+            copyfile('rating_step1_before.m',testCase.testFile);
+
+            Refactor.file(testCase.testFile);
+
+            txtExpected = Parser.readFile('rating_step1_after.m');
+            txtActual = Parser.readFile(testCase.testFile);
+
+            testCase.assertEqual(txtActual, txtExpected);
+        end
 %         function testFile_Inline_renamedVariables(testCase)
 %             copyfile('rating_step2_before.m',testCase.testFile);
 %                         
