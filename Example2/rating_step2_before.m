@@ -1,5 +1,5 @@
 function result = rating(aDriver)
-if moreThanFiveLateDeliveries(aDriver) %<inline>
+if moreThanFiveLateDeliveries(aDriver) %<inline>moreThanFiveLateDeliveries
     result = 2;
 else
     result = 1;

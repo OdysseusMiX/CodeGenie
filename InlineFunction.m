@@ -16,11 +16,32 @@ functionName = tokens(index).string(10:end);
 
 indCallerTokens = findIndexOfCallerToken(index, tokens, functionName);
 
+% Find indices of input arguments
+indInputArgs = [];
+parenCount = 0;
+cursor = indCallerTokens(1);
+while cursor<=indCallerTokens(end)
+    cursor = cursor+1;
+    if any(strcmp(tokens(cursor).string, {'[','(','{'}))
+        parenCount = parenCount+1;
+    elseif any(strcmp(tokens(cursor).string, {']',')','}'}))
+        parenCount = parenCount-1;
+    end
+    if parenCount == 1 && strcmp(tokens(cursor).type, 'word')
+        indInputArgs = [indInputArgs cursor];
+    end
+    if parenCount==0
+        break;
+    end
+end
+% Get names of input arguments
+inputArgNames = {tokens(indInputArgs).string};
+
 [funcTokens, indFuncTokens] = Parser.parseFunction(functionName, filename, tokens);
 
 verifyCanInlineFunction(funcTokens, functionName);
 
-statementTokens = getInlineStatementTokens(funcTokens);
+statementTokens = getInlineStatementTokens(funcTokens, inputArgNames);
 
 trimmedTokens = trimTokens(tokens, index, indFuncTokens, indCallerTokens);
 
@@ -155,19 +176,82 @@ elseif length(outputs)==1
 end
 end
 
-function [statementTokens] = getInlineStatementTokens(funcTokens)
+function [statementTokens] = getInlineStatementTokens(funcTokens, inputArgNames)
+
 indStatements = true(size(funcTokens));
 
-indEndOfSig = findEndOfFunctionSignature(funcTokens);
+% indEndOfSig = findEndOfFunctionSignature(funcTokens);
+[~, indInputArgs, indOutputArgs, indEndOfSig] = findFunctionSignatureIndices(funcTokens);
 indStatements(1:indEndOfSig) = false;
 
-indEndOfStatments = findEndOfStatementsIndex(funcTokens, indEndOfSig);
+assert(length(indInputArgs)==length(inputArgNames))
+assert(length(indOutputArgs) == 1)
+% TODO: handle case where input arguments are less than defined number
+% TODO: handle varargin case
+% TODO: handle varargout case
+
+% Rename inputs to match called names
+renamedTokens = funcTokens;
+definedInputNames = {funcTokens(indInputArgs).string};
+for iInput = 1:length(inputArgNames)
+    if ~strcmp(inputArgNames{iInput}, definedInputNames{iInput})
+        indName = find(strcmp(definedInputNames{iInput}, {funcTokens.string}));
+        for iRename = 1:length(indName)
+            renamedTokens(indName(iRename)).string = inputArgNames{iInput};
+        end
+    end
+end
+
+indEndOfStatments = findEndOfStatementsIndex(renamedTokens, indEndOfSig);
 indStatements(indEndOfStatments+1:end) = false;
 
-indReturnAssignment = findReturnAssignmentIndices(funcTokens);
+indReturnAssignment = findReturnAssignmentIndices(renamedTokens);
 indStatements(indReturnAssignment) = false;
 
-statementTokens = funcTokens(indStatements);
+statementTokens = renamedTokens(indStatements);
+end
+
+function [indFuncName, indInputArgs, indOutputArgs, indEndOfSig] = findFunctionSignatureIndices(funcTokens)
+% Find argument and function name tokens
+indOutputArgs = [];
+indInputArgs = [];
+indFuncName = [];
+indEndOfSig = [];
+cursor = 1;
+parenCount = 0;
+assert(strcmp(funcTokens(cursor).string, 'function'));
+while cursor<length(funcTokens)
+    cursor=cursor+1;
+    switch funcTokens(cursor).type
+        case 'operator'
+            if any(strcmp(funcTokens(cursor).string, {'[','(','{'}))
+                parenCount = parenCount+1;
+            elseif any(strcmp(funcTokens(cursor).string, {']',')','}'}))
+                parenCount = parenCount-1;
+            elseif strcmp(funcTokens(cursor).string, '=') && ~isempty(indFuncName)
+                indOutputArgs = indFuncName;
+                indFuncName = [];
+            end
+        case 'word'
+            if parenCount==0
+                indFuncName = cursor;
+            elseif parenCount == 1
+                if isempty(indFuncName)
+                    indOutputArgs = [indOutputArgs cursor];
+                else
+                    indInputArgs = [indInputArgs cursor];
+                end
+            end
+    end
+    % Break out if at end of signature
+   if parenCount == 0 && strcmp(funcTokens(cursor).type, 'newline')
+       while cursor<length(funcTokens) && any(strcmp(funcTokens(cursor+1).type, {'whitespace','newline'}))
+           cursor = cursor+1;
+       end
+       indEndOfSig = cursor;
+       break;
+   end
+end
 end
 
 function verifyCanInlineFunction(funcTokens, functionName)

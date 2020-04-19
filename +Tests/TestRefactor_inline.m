@@ -101,16 +101,16 @@ classdef TestRefactor_inline < matlab.unittest.TestCase
 
             testCase.assertEqual(txtActual, txtExpected);
         end
-%         function testFile_Inline_renamedVariables(testCase)
-%             copyfile('rating_step2_before.m',testCase.testFile);
-%                         
-%             Refactor.file(testCase.testFile);
-%             
-%             txtExpected = Parser.readFile('rating_step2_after.m');            
-%             txtActual = Parser.readFile(testCase.testFile);
-%             
-%             testCase.assertEqual(txtActual, txtExpected);
-%         end
+        function testFile_Inline_renamedVariables(testCase)
+            copyfile('rating_step2_before.m',testCase.testFile);
+                        
+            Refactor.file(testCase.testFile);
+            
+            txtExpected = Parser.readFile('rating_step1_after.m');            
+            txtActual = Parser.readFile(testCase.testFile);
+            
+            testCase.assertEqual(txtActual, txtExpected);
+        end
 %         function testFile_Inline_handleReferenceAssignment(testCase)
 %             copyfile('reportLines_step1_before.m',testCase.testFile);
 %                         
