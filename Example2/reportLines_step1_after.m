@@ -3,3 +3,4 @@ function lines = reportLines(aCustomer)
   lines.push({'name', aCustomer.name});
   lines.push({'location', aCustomer.location});
 end
+

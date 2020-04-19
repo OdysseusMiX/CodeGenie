@@ -1,6 +1,6 @@
 function lines = reportLines(aCustomer)
   lines = Array;
-  gatherCustomerData(lines, aCustomer); %<inline>
+  gatherCustomerData(lines, aCustomer); %<inline>gatherCustomerData
 end
 
 function gatherCustomerData(out, aCustomer)

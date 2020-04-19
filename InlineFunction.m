@@ -185,7 +185,7 @@ indStatements = true(size(funcTokens));
 indStatements(1:indEndOfSig) = false;
 
 assert(length(indInputArgs)==length(inputArgNames))
-assert(length(indOutputArgs) == 1)
+assert(length(indOutputArgs) < 2)
 % TODO: handle case where input arguments are less than defined number
 % TODO: handle varargin case
 % TODO: handle varargout case
@@ -205,8 +205,10 @@ end
 indEndOfStatments = findEndOfStatementsIndex(renamedTokens, indEndOfSig);
 indStatements(indEndOfStatments+1:end) = false;
 
+if ~isempty(indOutputArgs)
 indReturnAssignment = findReturnAssignmentIndices(renamedTokens);
 indStatements(indReturnAssignment) = false;
+end
 
 statementTokens = renamedTokens(indStatements);
 end
