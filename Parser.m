@@ -119,7 +119,6 @@ classdef Parser
         end
         
         function [results, levels] = listProgramsInFile(filename)
-            % FIXME: I should use named scopes instead of closure levels
             [~, name] = fileparts(filename);
             results = {name};
             levels = 1;
@@ -134,9 +133,10 @@ classdef Parser
                         case 'function'
                             if maybeScript
                                 maybeScript = false;
+                                levels = tokens(i).closureID;
                                 continue;
                             else
-                                levels = [levels; tokens(i).closureID - 1];
+                                levels = [levels; tokens(i).closureID];
                                 [subfunction, i] = findSubfunctionName(tokens, i);
                                 results = [results; {subfunction}];
                             end
