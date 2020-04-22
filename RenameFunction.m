@@ -12,23 +12,11 @@ end
 
 function renameFunction(tokens, index, filename)
 
-tagString = tokens(index).string(14:end);
-tags = regexp(tagString,'(\w+)::(\w+)','tokens');
-oldName = tags{1}{1};
-newName = tags{1}{2};
+[oldName, newName] = getTagData(tokens, index);
 
-indOldName = find(strcmp({tokens.string}, oldName));
+tokensWithoutTag = removeTag(tokens, index);
 
-refactoredTokens = tokens;
-for i=1:length(indOldName)
-    refactoredTokens(indOldName(i)).string = newName;
-end
-
-indexEnd = index;
-if strcmp(tokens(index-1).type, 'whitespace')
-    index = index-1;
-end
-refactoredTokens(index:indexEnd) = [];
+refactoredTokens = replaceNames(tokensWithoutTag, oldName, newName);
 
 txt = [refactoredTokens.string];
 
@@ -39,4 +27,29 @@ function overwriteFile(filename, txt)
 fid = fopen(filename,'w');
 fprintf(fid,'%s', txt);
 fclose(fid);
+end
+
+function [oldName, newName] = getTagData(tokens, index)
+tagString = tokens(index).string(14:end);
+tags = regexp(tagString,'(\w+)::(\w+)','tokens');
+oldName = tags{1}{1};
+newName = tags{1}{2};
+end
+
+function result = replaceNames(tokens, oldName, newName)
+indOldName = find(strcmp({tokens.string}, oldName));
+
+result = tokens;
+for i=1:length(indOldName)
+    result(indOldName(i)).string = newName;
+end
+end
+
+function result = removeTag(tokens, index)
+indexEnd = index;
+if strcmp(tokens(index-1).type, 'whitespace')
+    index = index-1;
+end
+result = tokens;
+result(index:indexEnd) = [];
 end
