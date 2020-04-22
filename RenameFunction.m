@@ -13,8 +13,9 @@ end
 function renameFunction(tokens, index, filename)
 
 tagString = tokens(index).string(14:end);
-oldName = 'circum';
-newName = 'circumference';
+tags = regexp(tagString,'(\w+)::(\w+)','tokens');
+oldName = tags{1}{1};
+newName = tags{1}{2};
 
 indOldName = find(strcmp({tokens.string}, oldName));
 
