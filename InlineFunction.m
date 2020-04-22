@@ -16,26 +16,7 @@ functionName = tokens(index).string(10:end);
 
 indCallerTokens = findIndexOfCallerToken(index, tokens, functionName);
 
-% Find indices of input arguments
-indInputArgs = [];
-parenCount = 0;
-cursor = indCallerTokens(1);
-while cursor<=indCallerTokens(end)
-    cursor = cursor+1;
-    if any(strcmp(tokens(cursor).string, {'[','(','{'}))
-        parenCount = parenCount+1;
-    elseif any(strcmp(tokens(cursor).string, {']',')','}'}))
-        parenCount = parenCount-1;
-    end
-    if parenCount == 1 && strcmp(tokens(cursor).type, 'word')
-        indInputArgs = [indInputArgs cursor];
-    end
-    if parenCount==0
-        break;
-    end
-end
-% Get names of input arguments
-inputArgNames = {tokens(indInputArgs).string};
+inputArgNames = getInputArgumentNames( tokens(indCallerTokens) );
 
 [funcTokens, indFuncTokens] = Parser.parseFunction(functionName, filename, tokens);
 
@@ -81,21 +62,6 @@ function overwriteFile(filename, txt)
 fid = fopen(filename,'w');
 fprintf(fid,'%s', txt);
 fclose(fid);
-end
-
-function result = findEndOfFunctionSignature(funcTokens)
-assert(strcmp(funcTokens(1).string,'function'));
-
-result = 1;
-while result<length(funcTokens)
-    result = result+1;
-    if strcmp(funcTokens(result).type,'newline')
-        break;
-    end
-end
-while any(strcmp(funcTokens(result+1).type, {'whitespace','newline'}))
-    result = result+1;
-end
 end
 
 function indLastAssignment = findLastAssignmentToOutputIndex(funcTokens, outputs)
@@ -273,4 +239,27 @@ refactored = [...
     trimmedTokens(indCallerTokens(end)+1:end)...
     ];
 txt = [refactored.string];
+end
+
+function inputArgNames = getInputArgumentNames(callerTokens)
+% Find indices of input arguments
+indInputArgs = [];
+parenCount = 0;
+cursor = 1;
+while cursor<=length(callerTokens)
+    cursor = cursor+1;
+    if any(strcmp(callerTokens(cursor).string, {'[','(','{'}))
+        parenCount = parenCount+1;
+    elseif any(strcmp(callerTokens(cursor).string, {']',')','}'}))
+        parenCount = parenCount-1;
+    end
+    if parenCount == 1 && strcmp(callerTokens(cursor).type, 'word')
+        indInputArgs = [indInputArgs cursor];
+    end
+    if parenCount==0
+        break;
+    end
+end
+% Get names of input arguments
+inputArgNames = {callerTokens(indInputArgs).string};
 end
