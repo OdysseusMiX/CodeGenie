@@ -26,6 +26,13 @@ classdef Refactor
                 index = indStart(1);
                 InlineFunction.execute(tokens, index, filename);
             end
+            
+            indStart = find(strncmp('%<renameFunc>', {tokens.string}, 13));
+            if ~isempty(indStart)
+                index = indStart(1);
+                RenameFunction.execute(tokens, index, filename);
+            end
+            
         end
     end
 end
