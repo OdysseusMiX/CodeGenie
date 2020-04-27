@@ -18,7 +18,7 @@ indInsert = findEndOfCurrentFunctionOrScript(tokens, index(1));
 
 txt = getRefactoredText(tokens, index, indInsert, functionCall);
 
-overwriteFile(filename, txt);
+FileManager.overwriteFile(filename, txt);
 end
 
 function indInsert = findEndOfCurrentFunctionOrScript(tokens, startIndex)
@@ -64,10 +64,4 @@ txt_before_end = [tokens((index(end)+1):(indInsert-1)).string];
 txt_extracted = ['function ' functionCall tokens(index(2:end-1)).string 'end' newline];
 txt_after = [tokens(indInsert:nTokens).string];
 txt = [txt_before_extraction, txt_replacement, txt_before_end, newline, txt_extracted, txt_after ];
-end
-
-function overwriteFile(filename, txt)
-fid = fopen(filename,'w');
-fprintf(fid,'%s', txt);
-fclose(fid);
 end

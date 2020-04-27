@@ -7,6 +7,21 @@ classdef TestFileManager < matlab.unittest.TestCase
             txt = FileManager.readFile(file);
             testCase.assertEqual(txt, sprintf('function simpleFunction\n\nend'));
         end
+        
+        function testOverwriteFile(testCase)
+            testFile = '+Tests/TestFixture/simpleFunction_test.m';
+            copyfile('+Tests/TestFixture/simpleFunction.m', testFile);
+
+            newText = 'Hello, World!';
+            
+            FileManager.overwriteFile(testFile, newText);
+            
+            txt = FileManager.readFile(testFile);
+            testCase.assertEqual(txt, newText);
+            
+            delete(testFile)
+        end
+            
     end
     
 end

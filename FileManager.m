@@ -12,6 +12,11 @@ classdef FileManager
             end
         end
         
+        function overwriteFile(filename, txt)
+            fid = fopen(filename,'w');
+            fprintf(fid,'%s', txt);
+            fclose(fid);
+        end
     end
 end
         

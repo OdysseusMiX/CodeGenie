@@ -28,7 +28,7 @@ trimmedTokens = trimTokens(tokens, index, indFuncTokens, indCallerTokens);
 
 txt = getRefactoredText_Inline(trimmedTokens, indCallerTokens, statementTokens);
 
-overwriteFile(filename, txt);
+FileManager.overwriteFile(filename, txt);
 end
 
 function result = trimTokens(tokens, index, indFuncTokens, indCallerTokens)
@@ -56,12 +56,6 @@ else
     % Adjust indKeep to account for replacement of caller tokens
     error('not yet implemented');
 end
-end
-
-function overwriteFile(filename, txt)
-fid = fopen(filename,'w');
-fprintf(fid,'%s', txt);
-fclose(fid);
 end
 
 function indLastAssignment = findLastAssignmentToOutputIndex(funcTokens, outputs)

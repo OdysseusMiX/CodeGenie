@@ -44,7 +44,7 @@ end
 % rewrite current file
 refactoredTokens = tempTokens;
 txt = [refactoredTokens.string];
-overwriteFile(filename, txt);
+FileManager.overwriteFile(filename, txt);
 
 % all callers in other files (current folder)
 files = dir(cd);
@@ -59,19 +59,13 @@ for iFile=1:length(files)
                 indCallers = find(strcmp({tempTokens.string},funcName));
                 for iCaller=1:length(indCallers)
                     tempTokens = addInputToArgumentList(tempTokens, indCallers(iCaller), defaultValue);
-                    overwriteFile(files(iFile).name, [tempTokens.string]);
+                    FileManager.overwriteFile(files(iFile).name, [tempTokens.string]);
                 end
             end
         end
     end
 end
 
-end
-
-function overwriteFile(filename, txt)
-fid = fopen(filename,'w');
-fprintf(fid,'%s', txt);
-fclose(fid);
 end
 
 function [oldName, newName] = getTagData(tokens, index)

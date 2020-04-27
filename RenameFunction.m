@@ -20,13 +20,7 @@ refactoredTokens = replaceNames(tokensWithoutTag, oldName, newName);
 
 txt = [refactoredTokens.string];
 
-overwriteFile(filename, txt);
-end
-
-function overwriteFile(filename, txt)
-fid = fopen(filename,'w');
-fprintf(fid,'%s', txt);
-fclose(fid);
+FileManager.overwriteFile(filename, txt);
 end
 
 function [oldName, newName] = getTagData(tokens, index)

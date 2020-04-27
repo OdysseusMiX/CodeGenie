@@ -23,7 +23,7 @@ functionCall = decorateFunctionCall(functionCall, inputs, outputs);
 
 txt = getRefactoredText(tokens, index, functionCall);
 
-overwriteFile(filename, txt);
+FileManager.overwriteFile(filename, txt);
 end
 
 function [inputs, outputs] = getArgumentsForExtractedCode(tokens, index, localNames)
@@ -70,10 +70,4 @@ txt_replacement = [functionCall ';'];
 txt_after = [tokens((index(end)+1):nTokens).string];
 txt_extracted = ['function ' functionCall tokens(index(2:end-1)).string 'end' newline];
 txt = [txt_before, txt_replacement, txt_after, newline, txt_extracted ];
-end
-
-function overwriteFile(filename, txt)
-fid = fopen(filename,'w');
-fprintf(fid,'%s', txt);
-fclose(fid);
 end
