@@ -14,7 +14,7 @@ function addInput(tokens, index, filename)
 
 [newInputName, defaultValue] = Refactor.getTagData(tokens, index);
 
-tempTokens = removeTag(tokens, index);
+tempTokens = Refactor.removeTag(tokens, index);
 
 % get function name and index
 closures = tokens(index).closureID;
@@ -66,15 +66,6 @@ for iFile = length(mfiles)
     end
 end
 
-end
-
-function result = removeTag(tokens, index)
-indexEnd = index;
-if strcmp(tokens(index-1).type, 'whitespace')
-    index = index-1;
-end
-result = tokens;
-result(index:indexEnd) = [];
 end
 
 function tempTokens = addInputToArgumentList(tempTokens, indexCaller, string)

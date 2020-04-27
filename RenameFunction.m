@@ -14,7 +14,7 @@ function renameFunction(tokens, index, filename)
 
 [oldName, newName] = Refactor.getTagData(tokens, index);
 
-tokensWithoutTag = removeTag(tokens, index);
+tokensWithoutTag = Refactor.removeTag(tokens, index);
 
 refactoredTokens = replaceNames(tokensWithoutTag, oldName, newName);
 
@@ -30,13 +30,4 @@ result = tokens;
 for i=1:length(indOldName)
     result(indOldName(i)).string = newName;
 end
-end
-
-function result = removeTag(tokens, index)
-indexEnd = index;
-if strcmp(tokens(index-1).type, 'whitespace')
-    index = index-1;
-end
-result = tokens;
-result(index:indexEnd) = [];
 end

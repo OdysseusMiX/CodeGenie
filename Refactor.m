@@ -53,5 +53,13 @@ classdef Refactor
             end
         end
 
+        function result = removeTag(tokens, index)
+            indexEnd = index;
+            if strcmp(tokens(index-1).type, 'whitespace')
+                index = index-1;
+            end
+            result = tokens;
+            result(index:indexEnd) = [];
+        end
     end
 end
