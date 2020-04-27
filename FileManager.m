@@ -17,6 +17,15 @@ classdef FileManager
             fprintf(fid,'%s', txt);
             fclose(fid);
         end
+        
+        function mfiles = getMFiles(fileDir)
+            files = dir(fileDir);
+            isMFile = false(size(files));
+            for iFile=1:length(files)
+                isMFile(iFile) =  ~files(iFile).isdir && strcmp(files(iFile).name(end-1:end), '.m');
+            end
+            mfiles = files(isMFile);
+        end
     end
 end
         

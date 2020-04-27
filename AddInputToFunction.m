@@ -47,21 +47,21 @@ txt = [refactoredTokens.string];
 FileManager.overwriteFile(filename, txt);
 
 % all callers in other files (current folder)
-files = dir(cd);
-for iFile=1:length(files)
-    if ~files(iFile).isdir && strcmp(files(iFile).name(end-1:end), '.m')
-        if ~strcmp(files(iFile).name, filename)
-            txt = FileManager.readFile(files(iFile).name);
-            expr = sprintf('%s', funcName);
-            matches = regexp(txt, expr, 'once');
-            if ~isempty(matches)
-                tempTokens = Parser.parse(txt);
-                indCallers = find(strcmp({tempTokens.string},funcName));
-                for iCaller=1:length(indCallers)
-                    tempTokens = addInputToArgumentList(tempTokens, indCallers(iCaller), defaultValue);
-                    FileManager.overwriteFile(files(iFile).name, [tempTokens.string]);
-                end
-            end
+mfiles = FileManager.getMFiles(cd);
+for iFile = length(mfiles)
+    if strcmp(mfiles(iFile).name, filename)
+        continue;
+    end
+    
+    txt = FileManager.readFile(mfiles(iFile).name);
+    expr = sprintf('%s', funcName);
+    matches = regexp(txt, expr, 'once');
+    if ~isempty(matches)
+        tempTokens = Parser.parse(txt);
+        indCallers = find(strcmp({tempTokens.string},funcName));
+        for iCaller=1:length(indCallers)
+            tempTokens = addInputToArgumentList(tempTokens, indCallers(iCaller), defaultValue);
+            FileManager.overwriteFile(mfiles(iFile).name, [tempTokens.string]);
         end
     end
 end

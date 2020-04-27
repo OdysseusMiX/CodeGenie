@@ -22,6 +22,20 @@ classdef TestFileManager < matlab.unittest.TestCase
             delete(testFile)
         end
             
+        function testGetMFiles(testCase)
+            testFixtureDir = '+Tests/TestFixture';
+            
+            mfiles = FileManager.getMFiles(testFixtureDir);
+            
+            testCase.assertEqual({mfiles.name}', {
+            'ClassWithLeadingCommentBlock.m'
+            'ClassWithLeadingComments.m'
+            'SimpleClass.m'
+            'notAClass.m'
+            'simpleFunction.m'
+            'someScript.m'
+            });
+        end
     end
     
 end
