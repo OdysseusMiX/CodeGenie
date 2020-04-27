@@ -20,19 +20,19 @@ classdef TestRefactor_replaceInput < matlab.unittest.TestCase
     end
     
     methods (Test)
-        function testFile_usesOnlySubfieldOfInput(testCase)
-            copyfile('inNewEngland_before.m','inNewEngland.m');
-            copyfile('changeParameterExample_before.m','changeParameterExample.m');
-                        
-            Refactor.file('inNewEngland.m');
-            
-            txtExpected = FileManager.readFile('inNewEngland_after.m');
-            txtActual = FileManager.readFile('inNewEngland.m');
-            testCase.assertEqual(txtActual, txtExpected);
-            
-            txtExpected = FileManager.readFile('changeParameterExample_after.m');
-            txtActual = FileManager.readFile('changeParameterExample.m');
-            testCase.assertEqual(txtActual, txtExpected);
-        end
+%         function testFile_usesOnlySubfieldOfInput(testCase)
+%             copyfile('inNewEngland_before.m','inNewEngland.m');
+%             copyfile('changeParameterExample_before.m','changeParameterExample.m');
+%                         
+%             Refactor.file('inNewEngland.m');
+%             
+%             txtExpected = FileManager.readFile('inNewEngland_after.m');
+%             txtActual = FileManager.readFile('inNewEngland.m');
+%             testCase.assertEqual(txtActual, txtExpected);
+%             
+%             txtExpected = FileManager.readFile('changeParameterExample_after.m');
+%             txtActual = FileManager.readFile('changeParameterExample.m');
+%             testCase.assertEqual(txtActual, txtExpected);
+%         end
     end
 end
