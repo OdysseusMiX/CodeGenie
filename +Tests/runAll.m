@@ -1,6 +1,7 @@
 function runAll
 
 test = {
+    Tests.TestFileManager
     Tests.TestLexer
     Tests.TestParser
     Tests.TestRefactor_extract

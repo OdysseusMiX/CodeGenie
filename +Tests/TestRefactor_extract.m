@@ -33,8 +33,8 @@ classdef TestRefactor_extract < matlab.unittest.TestCase
                         
             Refactor.file(testFile);
             
-            txtExpected = Parser.readFile('printOwing_step1_after.m');            
-            txtActual = Parser.readFile(testFile);
+            txtExpected = FileManager.readFile('printOwing_step1_after.m');            
+            txtActual = FileManager.readFile(testFile);
             
             testCase.assertEqual(txtActual, txtExpected);
             
@@ -47,8 +47,8 @@ classdef TestRefactor_extract < matlab.unittest.TestCase
             
             Refactor.file(testFile);
             
-            txtExpected = Parser.readFile('printOwing_step2_after.m');            
-            txtActual = Parser.readFile(testFile);
+            txtExpected = FileManager.readFile('printOwing_step2_after.m');            
+            txtActual = FileManager.readFile(testFile);
             
             testCase.assertEqual(txtActual, txtExpected);
             
@@ -61,8 +61,8 @@ classdef TestRefactor_extract < matlab.unittest.TestCase
             
             Refactor.file(testFile);
             
-            txtExpected = Parser.readFile('printOwing_step3_after.m');            
-            txtActual = Parser.readFile(testFile);
+            txtExpected = FileManager.readFile('printOwing_step3_after.m');            
+            txtActual = FileManager.readFile(testFile);
             
             testCase.assertEqual(txtActual, txtExpected);
             
@@ -75,8 +75,8 @@ classdef TestRefactor_extract < matlab.unittest.TestCase
             
             Refactor.file(testFile);
             
-            txtExpected = Parser.readFile('printOwing_step4_after.m');
-            txtActual = Parser.readFile(testFile);
+            txtExpected = FileManager.readFile('printOwing_step4_after.m');
+            txtActual = FileManager.readFile(testFile);
             
             testCase.assertEqual(txtActual, txtExpected);
             
@@ -89,8 +89,8 @@ classdef TestRefactor_extract < matlab.unittest.TestCase
             
             Refactor.file(testFile);
             
-            txtExpected = Parser.readFile('printOwing_step5_after.m');
-            txtActual = Parser.readFile(testFile);
+            txtExpected = FileManager.readFile('printOwing_step5_after.m');
+            txtActual = FileManager.readFile(testFile);
             
             testCase.assertEqual(txtActual, txtExpected);
             

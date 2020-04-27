@@ -51,7 +51,7 @@ files = dir(cd);
 for iFile=1:length(files)
     if ~files(iFile).isdir && strcmp(files(iFile).name(end-1:end), '.m')
         if ~strcmp(files(iFile).name, filename)
-            txt = Parser.readFile(files(iFile).name);
+            txt = FileManager.readFile(files(iFile).name);
             expr = sprintf('%s', funcName);
             matches = regexp(txt, expr, 'once');
             if ~isempty(matches)

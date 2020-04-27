@@ -126,12 +126,6 @@ classdef TestParser < matlab.unittest.TestCase
             self.assertEqual({statements.statementNumber}, table(:,3)');
         end
         
-        function testReadFile_simpleFunction(testCase)
-            file = '+Tests/TestFixture/simpleFunction.m';
-            txt = Parser.readFile(file);
-            testCase.assertEqual(txt, sprintf('function simpleFunction\n\nend'));
-        end
-
         function testParseFile_simpleFunction(testCase)
             file = '+Tests/TestFixture/simpleFunction.m';
             tokens = Parser.parseFile(file);

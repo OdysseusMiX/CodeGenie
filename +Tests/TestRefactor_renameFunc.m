@@ -25,8 +25,8 @@ classdef TestRefactor_renameFunc < matlab.unittest.TestCase
                         
             Refactor.file('geometry.m');
             
-            txtExpected = Parser.readFile('geometry_after.m');
-            txtActual = Parser.readFile('geometry.m');
+            txtExpected = FileManager.readFile('geometry_after.m');
+            txtActual = FileManager.readFile('geometry.m');
             testCase.assertEqual(txtActual, txtExpected);
             
             delete('geometry.m');

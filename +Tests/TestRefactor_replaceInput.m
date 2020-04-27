@@ -26,12 +26,12 @@ classdef TestRefactor_replaceInput < matlab.unittest.TestCase
                         
             Refactor.file('inNewEngland.m');
             
-            txtExpected = Parser.readFile('inNewEngland_after.m');
-            txtActual = Parser.readFile('inNewEngland.m');
+            txtExpected = FileManager.readFile('inNewEngland_after.m');
+            txtActual = FileManager.readFile('inNewEngland.m');
             testCase.assertEqual(txtActual, txtExpected);
             
-            txtExpected = Parser.readFile('changeParameterExample_after.m');
-            txtActual = Parser.readFile('changeParameterExample.m');
+            txtExpected = FileManager.readFile('changeParameterExample_after.m');
+            txtActual = FileManager.readFile('changeParameterExample.m');
             testCase.assertEqual(txtActual, txtExpected);
         end
     end

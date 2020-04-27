@@ -32,12 +32,12 @@ classdef TestRefactor_addInput < matlab.unittest.TestCase
                         
             Refactor.file('Book.m');
             
-            txtExpected = Parser.readFile('../Book_after.m');
-            txtActual = Parser.readFile('Book.m');
+            txtExpected = FileManager.readFile('../Book_after.m');
+            txtActual = FileManager.readFile('Book.m');
             testCase.assertEqual(txtActual, txtExpected);
             
-            txtExpected = Parser.readFile('../LibraryUseCase_after.m');
-            txtActual = Parser.readFile('LibraryUseCase.m');
+            txtExpected = FileManager.readFile('../LibraryUseCase_after.m');
+            txtActual = FileManager.readFile('LibraryUseCase.m');
             testCase.assertEqual(txtActual, txtExpected);
             
             delete('Array.m');

@@ -100,8 +100,8 @@ classdef TestRefactor_inline < matlab.unittest.TestCase
 
             Refactor.file(testCase.testFile);
 
-            txtExpected = Parser.readFile('rating_step1_after.m');
-            txtActual = Parser.readFile(testCase.testFile);
+            txtExpected = FileManager.readFile('rating_step1_after.m');
+            txtActual = FileManager.readFile(testCase.testFile);
 
             testCase.assertEqual(txtActual, txtExpected);
         end
@@ -110,8 +110,8 @@ classdef TestRefactor_inline < matlab.unittest.TestCase
                         
             Refactor.file(testCase.testFile);
             
-            txtExpected = Parser.readFile('rating_step1_after.m');            
-            txtActual = Parser.readFile(testCase.testFile);
+            txtExpected = FileManager.readFile('rating_step1_after.m');            
+            txtActual = FileManager.readFile(testCase.testFile);
             
             testCase.assertEqual(txtActual, txtExpected);
         end
@@ -120,8 +120,8 @@ classdef TestRefactor_inline < matlab.unittest.TestCase
                         
             Refactor.file(testCase.testFile);
             
-            txtExpected = Parser.readFile('reportLines_step1_after.m');            
-            txtActual = Parser.readFile(testCase.testFile);
+            txtExpected = FileManager.readFile('reportLines_step1_after.m');            
+            txtActual = FileManager.readFile(testCase.testFile);
             
             testCase.assertEqual(txtActual, txtExpected);
         end

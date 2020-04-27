@@ -5,19 +5,8 @@ classdef Parser
     
     methods (Static)
         function tokens = parseFile(file)
-            txt = Parser.readFile(file);
+            txt = FileManager.readFile(file);
             tokens = Parser.parse(txt);
-        end
-        
-        function txt = readFile(file)
-            fid = fopen(file);
-            if fid<3
-                txt = '';
-            else
-                txt = fread(fid,'*char');
-                fclose(fid);
-                txt = txt';
-            end
         end
         
         function result = parse(txt)
