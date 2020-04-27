@@ -33,6 +33,12 @@ classdef Refactor
                 RenameFunction.execute(tokens, index, filename);
             end
             
+            indStart = find(strncmp('%<addInput>', {tokens.string}, 11));
+            if ~isempty(indStart)
+                index = indStart(1);
+                AddInputToFunction.execute(tokens, index, filename);
+            end
+            
         end
     end
 end

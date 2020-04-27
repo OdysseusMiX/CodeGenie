@@ -5,15 +5,20 @@ classdef TestRefactor_addInput < matlab.unittest.TestCase
         startDir
     end
     
-    methods (TestMethodSetup)
-        function setup(testCase)
+    methods (TestClassSetup)
+        function goToFixtureDir(testCase)
             testCase.oldpath = addpath(cd);
             testCase.startDir = cd;
             cd('Example3')
+            testDir = 'Test';
+            if ~exist(testDir,'dir')
+                mkdir('Test')
+            end
+            cd('Test')
         end
     end
-    methods (TestMethodTeardown)
-        function tearDown(testCase)
+    methods (TestClassTeardown)
+        function goBackToStartDir(testCase)
             cd(testCase.startDir)
             path(testCase.oldpath)
         end
@@ -21,18 +26,22 @@ classdef TestRefactor_addInput < matlab.unittest.TestCase
     
     methods (Test)
         function testFile_usesOnlySubfieldOfInput(testCase)
-            copyfile('Book_before.m','Book.m');
-            copyfile('LibraryUseCase_before.m','LibraryUseCase.m');
+            copyfile('../Array.m','Array.m');
+            copyfile('../Book_before.m','Book.m');
+            copyfile('../LibraryUseCase_before.m','LibraryUseCase.m');
                         
             Refactor.file('Book.m');
             
-            txtExpected = Parser.readFile('Book_after.m');
+            txtExpected = Parser.readFile('../Book_after.m');
             txtActual = Parser.readFile('Book.m');
             testCase.assertEqual(txtActual, txtExpected);
             
-            txtExpected = Parser.readFile('LibraryUseCase_after.m');
+            txtExpected = Parser.readFile('../LibraryUseCase_after.m');
             txtActual = Parser.readFile('LibraryUseCase.m');
             testCase.assertEqual(txtActual, txtExpected);
+            
+            delete('Book.m');
+            delete('LibraryUseCase.m');
         end
     end
 end
