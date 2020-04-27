@@ -243,23 +243,39 @@ end
 
 function inputArgNames = getInputArgumentNames(callerTokens)
 % Find indices of input arguments
-indInputArgs = [];
+inputArgNames = repmat({''},10,1);
 parenCount = 0;
 cursor = 1;
-while cursor<=length(callerTokens)
+iArg = 0;
+while cursor<length(callerTokens)
     cursor = cursor+1;
-    if any(strcmp(callerTokens(cursor).string, {'[','(','{'}))
-        parenCount = parenCount+1;
-    elseif any(strcmp(callerTokens(cursor).string, {']',')','}'}))
-        parenCount = parenCount-1;
+    
+    switch callerTokens(cursor).string
+        case {'[','(','{'}
+            parenCount = parenCount+1;
+            continue;
+        case {']',')','}'}
+            parenCount = parenCount-1;
+            continue;
     end
-    if parenCount == 1 && strcmp(callerTokens(cursor).type, 'word')
-        indInputArgs = [indInputArgs cursor];
+    
+    switch parenCount
+        case 0
+            break;
+        case 1
+            if strcmp(callerTokens(cursor).string, ',')
+                iArg = iArg+1;
+                continue;
+            end
     end
-    if parenCount==0
-        break;
+    
+    if ~strcmp(callerTokens(cursor).type,'whitespace')
+        if iArg==0
+            iArg = 1;
+        end
+        inputArgNames{iArg} = [inputArgNames{iArg} callerTokens(cursor).string];
     end
 end
-% Get names of input arguments
-inputArgNames = {callerTokens(indInputArgs).string};
+
+inputArgNames(iArg+1:end) = [];
 end
