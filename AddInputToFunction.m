@@ -12,7 +12,7 @@ end
 
 function addInput(tokens, index, filename)
 
-[newInputName, defaultValue] = getTagData(tokens, index);
+[newInputName, defaultValue] = Refactor.getTagData(tokens, index);
 
 tempTokens = removeTag(tokens, index);
 
@@ -66,13 +66,6 @@ for iFile = length(mfiles)
     end
 end
 
-end
-
-function [oldName, newName] = getTagData(tokens, index)
-tagString = tokens(index).string(12:end);
-tags = regexp(tagString,'(\w+)::(\w+)','tokens');
-oldName = tags{1}{1};
-newName = tags{1}{2};
 end
 
 function result = removeTag(tokens, index)

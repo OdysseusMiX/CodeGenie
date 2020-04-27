@@ -40,5 +40,18 @@ classdef Refactor
             end
             
         end
+        
+        function [key1, key2] = getTagData(tokens, index)
+            tagString = tokens(index).string;
+            keys = regexp(tagString,'%<\w+>(\w+)::(\w+)','tokens');
+            if ~isempty(keys) && ~isempty(keys{1})
+                key1 = keys{1}{1};
+                key2 = keys{1}{2};
+            else
+                key1 = '';
+                key2 = '';
+            end
+        end
+
     end
 end
