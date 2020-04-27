@@ -40,6 +40,7 @@ classdef TestRefactor_addInput < matlab.unittest.TestCase
             txtActual = Parser.readFile('LibraryUseCase.m');
             testCase.assertEqual(txtActual, txtExpected);
             
+            delete('Array.m');
             delete('Book.m');
             delete('LibraryUseCase.m');
         end
